@@ -1,13 +1,15 @@
 const _backgroundColor = 'rgb(0, 103, 189)';
+const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
+const _whiteColor = 'rgba(255, 255, 255, 0.7)';
 
 const _canvasW = 1000;
 const _canvasH = 600;
 
 const _sqSize = 20;
 
-const _centerX = _canvasW / 2; // - _sqSize / 2;
-const _centerY = _canvasH / 2; // - _sqSize / 2;
+const _centerX = _canvasW / 2; // + _sqSize / 2;
+const _centerY = _canvasH / 2; // + _sqSize / 2;
 
 const _gridSizes = [];
 const _gridStartPositions = [];
@@ -30,7 +32,7 @@ function setup() {
 
 	// noLoop(); // only run draw code once
 
-	// rectMode(CENTER); // draw square from centre
+	rectMode(CENTER); // draw square from centre
 
 	// createEdgedGrid(3, 3, 10, 10, _sqSize);
 
@@ -48,8 +50,13 @@ function setup() {
 		console.log('\n### gridSize:: =', gridSize);
 
 		// create set of start coords starting at centre and moving 1.5 square up and to the left on each tick
-		const gridStartX = _centerX - _sqSize * (gridSize / 2);
-		const gridStartY = _centerY - _sqSize * (gridSize / 2);
+		let gridStartX = _centerX - _sqSize * (gridSize / 2);
+		let gridStartY = _centerY - _sqSize * (gridSize / 2);
+
+		// When rectMode = CENTER we have to adjust positions by half a square
+		// (keeps grid drawn centrally on canvas)
+		gridStartX += _sqSize / 2;
+		gridStartY += _sqSize / 2;
 
 		console.log('### gridStartX:: =', gridStartX);
 		console.log('### gridStartY:: =', gridStartY);
@@ -80,12 +87,14 @@ function draw() {
 	// console.log('### mouseX/Y:: =', mouseX, mouseY);
 
 	// if (_checkForCollision) {
-	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
-	// 	const coords = getGridCell(mouseX, mouseY, gridSize, gridSize, _sqSize);
-	// 	// console.log('### coords:: =', coords);
+	const gridSize = _gridSizes[_gridSizes.length - 1];
+	const coords = getGridCell(mouseX, mouseY, gridSize, gridSize, _sqSize);
+	// console.log('### coords:: =', coords);
 
-	// 	stroke('white');
-	// 	square(coords.cellX, coords.cellY, _sqSize);
+	if (coords) {
+		stroke(_whiteColor);
+		square(coords.cellX, coords.cellY, _sqSize);
+	}
 	// }
 
 	stroke('white');
@@ -257,7 +266,6 @@ const createCell = function (pX, pY, pSize) {
 
 function getGridCell(_mouseX, _mouseY, pColumns, pRows, pSize) {
 	const firstCell = _gridStartPositions[_gridStartPositions.length - 1];
-	// console.log('### :: firstCell=', firstCell);
 
 	const startX = firstCell[0];
 	const startY = firstCell[1];
@@ -265,19 +273,11 @@ function getGridCell(_mouseX, _mouseY, pColumns, pRows, pSize) {
 	// const col = floor(_mouseX / size); // is the regular way
 	// But, we need to take into account where we've started drawing the squares from (startX)
 	// and the fact that we're drawing the squares from the centre, not the top left (pSize / 2)
-	const adjustedMouseX = _mouseX - startX; // - pSize / 2;
-	const adjustedMouseY = _mouseY - startY; // - pSize / 2;
+	const adjustedMouseX = _mouseX - startX + pSize / 2;
+	const adjustedMouseY = _mouseY - startY + pSize / 2;
 
 	const col = floor(adjustedMouseX / pSize);
 	const row = floor(adjustedMouseY / pSize);
-
-	// const col = floor((_mouseX - startX - pSize / 2) / pSize);
-	// const row = floor((_mouseY - startY - pSize / 2) / pSize);
-
-	// console.log('### _mouseX:: =', _mouseX);
-	// console.log('### _mouseY:: =', _mouseY);
-	// console.log('### col:: =', col);
-	// console.log('### row:: =', row);
 
 	const cellX = startX + col * pSize;
 	const cellY = startY + row * pSize;
