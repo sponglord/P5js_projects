@@ -7,9 +7,12 @@ const _canvasW = 1000;
 const _canvasH = 600;
 
 const _sqSize = 20;
+const unit = _sqSize / 9;
 
-const _centerX = _canvasW / 2; // + _sqSize / 2;
-const _centerY = _canvasH / 2; // + _sqSize / 2;
+const _centerX = _canvasW / 2;
+const _centerY = _canvasH / 2;
+
+let _maxDistFromCenter = null;
 
 const _gridSizes = [];
 const _gridStartPositions = [];
@@ -36,13 +39,10 @@ function setup() {
 
 	// createEdgedGrid(3, 3, 10, 10, _sqSize);
 
-	for (let i = 3; i <= 16; i += 2) {
-		// 3, 5, 7, 9, 11...
+	for (let i = 1; i <= 16; i += 2) {
+		// 1, 3, 5, 7, 9...
 		_gridSizes.push(i);
 	}
-
-	// square(350, 150, _sqSize);
-	// return;
 
 	for (let i = 0; i < _gridSizes.length; i++) {
 		const gridSize = _gridSizes[i];
@@ -67,9 +67,42 @@ function setup() {
 		_gridStartPositions.push([gridStartX, gridStartY]);
 	}
 
-	// console.log('### :: gridSizes=', gridSizes);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
-	console.log('### :: gridStartPosition=', _gridStartPositions);
+
+	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
+
+	// Calc top left square's dist from centre point
+	const dx = lastGridCell[0] - _centerX;
+	const dy = lastGridCell[1] - _centerY;
+	_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
+
+	// For each cell calculate a stroke color base on their distance from the centre
+	// - more chance of blue further from centre, & green closer
+	for (let i = 0; i < _cells.length; i++) {
+		const cell = _cells[i];
+
+		let outerStrokeColor;
+		let innerStrokeColor;
+
+		const chance = (cell.distFromCenter / _maxDistFromCenter) * 100;
+
+		var isOuterBlue = random(0, 100) < chance;
+		if (isOuterBlue) {
+			outerStrokeColor = _blueColor;
+		} else {
+			outerStrokeColor = _greenColor;
+		}
+
+		var isInnerBlue = random(0, 100) < chance;
+		if (isInnerBlue) {
+			innerStrokeColor = _blueColor;
+		} else {
+			innerStrokeColor = _greenColor;
+		}
+
+		cell.outerStrokeColor = outerStrokeColor;
+		cell.innerStrokeColor = innerStrokeColor;
+	}
 }
 
 function draw() {
@@ -77,14 +110,12 @@ function draw() {
 
 	updatePositions();
 
-	stroke(_greenColor);
+	// stroke(_greenColor);
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
-		square(cell.x, cell.y, _sqSize);
+		drawCell(cell, _sqSize);
 	}
-
-	// console.log('### mouseX/Y:: =', mouseX, mouseY);
 
 	// if (_checkForCollision) {
 	const gridSize = _gridSizes[_gridSizes.length - 1];
@@ -95,23 +126,20 @@ function draw() {
 		stroke(_whiteColor);
 		square(coords.cellX, coords.cellY, _sqSize);
 	}
-	// }
-
-	stroke('white');
-	square(340, 140, 20);
-	// square(470, 270, 20);
-	// circle(_centerX, _centerY, 15.55 * 2);
 }
 
 function mousePressed() {
-	_checkForCollision = true;
-
 	console.log('### mouseX:: =', mouseX);
 	console.log('### mouseY:: =', mouseY);
 
 	const gridSize = _gridSizes[_gridSizes.length - 1];
 	const coords = getGridCell(mouseX, mouseY, gridSize, gridSize, _sqSize);
 	console.log('### coords:: =', coords);
+
+	// if we're clicking within grid
+	if (coords) {
+		_checkForCollision = true;
+	}
 }
 
 function mouseReleased() {
@@ -120,30 +148,6 @@ function mouseReleased() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		cell.inCollision = false;
-	}
-}
-
-function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
-	for (let i = 0; i < pColumns; i++) {
-		for (let j = 0; j < pRows; j++) {
-			// Draw outer colums and rows
-			if (i === 0 || i === pColumns - 1 || j === 0 || j === pRows - 1) {
-				const x = pStartX + pSize * i;
-				const y = pStartY + pSize * j;
-
-				// console.log('### x,y:: =', x, y);
-
-				// if (count === 0 || count % 2 === 0) {
-				// 	stroke('red');
-				// } else {
-				// 	stroke('yellow');
-				// }
-
-				// square(x, y, pSize);
-
-				createCell(x, y, pSize);
-			}
-		}
 	}
 }
 
@@ -239,7 +243,27 @@ const move = function (cell, index) {
 	// }
 };
 
-const createCell = function (pX, pY, pSize) {
+function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
+	for (let i = 0; i < pColumns; i++) {
+		for (let j = 0; j < pRows; j++) {
+			// Draw outer colums and rows
+			if (i === 0 || i === pColumns - 1 || j === 0 || j === pRows - 1) {
+				const x = pStartX + pSize * i;
+				const y = pStartY + pSize * j;
+
+				// Calc distance from centre point of starting square
+				const dx = pStartX - _centerX;
+				const dy = pStartY - _centerY;
+				const dist = Math.sqrt(dx * dx + dy * dy);
+
+				createCell(x, y, pSize, pColumns, dist);
+			}
+		}
+	}
+}
+
+// TODO - either use gloabl vars everywhere *or* pass _cells as arg
+const createCell = function (pX, pY, pSize, pColumns, pDist) {
 	const collisionPadding = 0;
 	const imageW = pSize + collisionPadding; // make border we use to detect collision slightly larger that actual square
 	const imageH = pSize + collisionPadding;
@@ -254,16 +278,32 @@ const createCell = function (pX, pY, pSize) {
 		y: Math.random() * (_canvasH - imageH),
 		vx: Math.random() * 6 - 3,
 		vy: Math.random() * 6 - 3,
+		gridTargetX: pX,
+		gridTargetY: pY,
+		radialTargetX: null,
+		radialTargetY: null,
 		targetX: pX,
 		targetY: pY,
 		inCollision: false,
+		gridSize: pColumns,
+		distFromCenter: pDist,
+		outerStrokeColor: null,
 	};
-
-	// console.log('### :: cellObj.radius=', cellObj.radius);
 
 	_cells.push(cellObj);
 };
 
+function drawCell(pCell, pSqSize) {
+	stroke(pCell.outerStrokeColor);
+	square(pCell.x, pCell.y, unit * 7);
+
+	stroke(pCell.innerStrokeColor);
+	square(pCell.x, pCell.y, unit * 3);
+
+	// square(pCell.x, pCell.y, pSqSize);
+}
+
+// TODO - either use gloabl vars everywhere *or* pass _gridStartPositions as arg
 function getGridCell(_mouseX, _mouseY, pColumns, pRows, pSize) {
 	const firstCell = _gridStartPositions[_gridStartPositions.length - 1];
 
