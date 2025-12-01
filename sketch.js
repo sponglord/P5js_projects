@@ -16,6 +16,7 @@ let _maxDistFromCenter = null;
 
 const _gridSizes = [];
 const _gridStartPositions = [];
+const _gridSquaresCount = [];
 const _cells = [];
 
 let _checkForCollision = false;
@@ -62,47 +63,35 @@ function setup() {
 		console.log('### gridStartY:: =', gridStartY);
 
 		// create edged grid
-		createEdgedGrid(gridSize, gridSize, gridStartX, gridStartY, _sqSize, i);
+		const numSquaresCreated = createEdgedGrid(
+			gridSize,
+			gridSize,
+			gridStartX,
+			gridStartY,
+			_sqSize,
+			i
+		);
+		_gridSquaresCount.push(numSquaresCreated);
 
 		_gridStartPositions.push([gridStartX, gridStartY]);
 	}
 
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
-
-	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
+	console.log('### :: _gridSizes=', _gridSizes);
+	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
 	// Calc top left square's dist from centre point
+	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
 	const dx = lastGridCell[0] - _centerX;
 	const dy = lastGridCell[1] - _centerY;
 	_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
 
-	// For each cell calculate a stroke color base on their distance from the centre
-	// - more chance of blue further from centre, & green closer
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
+	// Now we know the maximum distance a square can be from the center
+	// - generate a stroke colour based on that distnace
+	generateCellStrokeColors(_cells, _maxDistFromCenter);
 
-		let outerStrokeColor;
-		let innerStrokeColor;
-
-		const chance = (cell.distFromCenter / _maxDistFromCenter) * 100;
-
-		var isOuterBlue = random(0, 100) < chance;
-		if (isOuterBlue) {
-			outerStrokeColor = _blueColor;
-		} else {
-			outerStrokeColor = _greenColor;
-		}
-
-		var isInnerBlue = random(0, 100) < chance;
-		if (isInnerBlue) {
-			innerStrokeColor = _blueColor;
-		} else {
-			innerStrokeColor = _greenColor;
-		}
-
-		cell.outerStrokeColor = outerStrokeColor;
-		cell.innerStrokeColor = innerStrokeColor;
-	}
+	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
+	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
 }
 
 function draw() {
@@ -110,17 +99,15 @@ function draw() {
 
 	updatePositions();
 
-	// stroke(_greenColor);
+	// stroke(_greenColor); // Not needed if we're stroking squares in a Georg Ness stylee
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		drawCell(cell, _sqSize);
 	}
 
-	// if (_checkForCollision) {
 	const gridSize = _gridSizes[_gridSizes.length - 1];
 	const coords = getGridCell(mouseX, mouseY, gridSize, gridSize, _sqSize);
-	// console.log('### coords:: =', coords);
 
 	if (coords) {
 		stroke(_whiteColor);
@@ -208,7 +195,7 @@ const move = function (cell, index) {
 	const bounce = -1;
 
 	if (_gotoTarget) {
-		// If image is not undergoing collision calculations - set it on it's way to it's final position
+		// If image is not undergoing collision calculations - set it on it's way to it's target position
 		if (!cell.inCollision) {
 			const dx = cell.targetX - cell.x;
 			const dy = cell.targetY - cell.y;
@@ -221,45 +208,31 @@ const move = function (cell, index) {
 	// Change the img's position by its new velocity
 	cell.x += cell.vx * _speed;
 	cell.y += cell.vy * _speed;
-
-	// Border detection
-	// const rad = 2;
-
-	// if (!_gotoTarget) {
-	// 	if (cell.x + rad > _canvasW) {
-	// 		cell.x = _canvasW - rad;
-	// 		cell.vx *= bounce;
-	// 	} else if (cell.x - rad < 0) {
-	// 		cell.x = rad;
-	// 		cell.vx *= bounce;
-	// 	}
-	// 	if (cell.y + rad > _canvasH) {
-	// 		cell.y = _canvasH - rad;
-	// 		cell.vy *= bounce;
-	// 	} else if (cell.y - rad < 0) {
-	// 		cell.y = rad;
-	// 		cell.vy *= bounce;
-	// 	}
-	// }
 };
 
+// Create a grid "outline" i.e. only draw the squares that represent the outer edge of the grid
 function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
+	let sqCount = 0;
 	for (let i = 0; i < pColumns; i++) {
 		for (let j = 0; j < pRows; j++) {
-			// Draw outer colums and rows
+			// Only draw outer colums and rows
 			if (i === 0 || i === pColumns - 1 || j === 0 || j === pRows - 1) {
 				const x = pStartX + pSize * i;
 				const y = pStartY + pSize * j;
 
-				// Calc distance from centre point of starting square
+				// Calculate the distance of the starting square from the centre point
 				const dx = pStartX - _centerX;
 				const dy = pStartY - _centerY;
 				const dist = Math.sqrt(dx * dx + dy * dy);
 
 				createCell(x, y, pSize, pColumns, dist);
+
+				// Count how many squares we're creating in each "outline"
+				sqCount++;
 			}
 		}
 	}
+	return sqCount;
 }
 
 // TODO - either use gloabl vars everywhere *or* pass _cells as arg
@@ -322,8 +295,69 @@ function getGridCell(_mouseX, _mouseY, pColumns, pRows, pSize) {
 	const cellX = startX + col * pSize;
 	const cellY = startY + row * pSize;
 
+	// Only return coords if we're within the grid
 	if (col >= 0 && col < pColumns && row >= 0 && row < pRows) {
 		return { col, row, cellX, cellY };
 	}
 	return null;
+}
+
+function generateCellStrokeColors(pCells, pMaxDistFromCenter) {
+	// For each cell calculate a stroke color base on their distance from the centre
+	// - more chance of blue further from centre, & green closer
+	for (let i = 0; i < pCells.length; i++) {
+		const cell = pCells[i];
+
+		let outerStrokeColor;
+		let innerStrokeColor;
+
+		const chance = (cell.distFromCenter / pMaxDistFromCenter) * 100;
+
+		var isOuterBlue = random(0, 100) < chance;
+		if (isOuterBlue) {
+			outerStrokeColor = _blueColor;
+		} else {
+			outerStrokeColor = _greenColor;
+		}
+
+		var isInnerBlue = random(0, 100) < chance;
+		if (isInnerBlue) {
+			innerStrokeColor = _blueColor;
+		} else {
+			innerStrokeColor = _greenColor;
+		}
+
+		cell.outerStrokeColor = outerStrokeColor;
+		cell.innerStrokeColor = innerStrokeColor;
+	}
+}
+
+function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
+	// For each cell, we can use it's .gridSize to work out how many squares are in it's grid...
+	// - get cells gridSize,
+	// - find the corresponding index in the _gridSizes array
+	// - use that index against the pGridSquaresCount array to extract the number of squares in that grid
+	for (let i = 0; i < pCells.length; i++) {
+		const cell = pCells[i];
+		const gridSize = cell.gridSize;
+
+		const gridSizeIndex = pGridSizes.indexOf(gridSize);
+
+		const numSquares = pGridSquaresCount[gridSizeIndex];
+
+		console.log(
+			'### :: gridSize:: gridSizeIndex:: numSquares=',
+			gridSize,
+			gridSizeIndex,
+			numSquares
+		);
+
+		circleRadius = 0;
+
+		for (var k = 0; k < numSquares; k++) {
+			const theta = (k * TWO_PI) / numSquares; // radial angle of the square
+			const radialTargetX = _centerX + circleRadius * cos(theta);
+			const radialTargetY = _centerY + circleRadius * sin(theta);
+		}
+	}
 }
