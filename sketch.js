@@ -22,7 +22,7 @@ const _gridSizes = [];
 const _gridStartPositions = [];
 const _gridSquaresCount = [];
 const _cells = [];
-// const _cellsByGridSize = [];
+const _cellsByGridSize = [];
 
 let _checkForCollision = false;
 let _gotoTarget = true;
@@ -48,8 +48,8 @@ function setup() {
 	for (let i = 1; i <= _maxGridSize + 1; i += 2) {
 		// 1, 3, 5, 7, 9...
 		_gridSizes.push(i);
-		//
-		// _cellsByGridSize[i] = [];
+		// Create a set of empty arrays stored at an index based on their grid size
+		_cellsByGridSize[i] = [];
 	}
 
 	// Use the grid sizes to calculate the start position of each of our grid outlines, moving out from the centre
@@ -72,7 +72,6 @@ function setup() {
 
 		// Calc top left square's dist from centre point
 		if (i === _gridSizes.length - 1) {
-			// const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
 			const dx = gridStartX - _centerX;
 			const dy = gridStartY - _centerY;
 			_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
@@ -99,12 +98,12 @@ function setup() {
 	}
 
 	console.log('### :: _gridSizes=', _gridSizes);
-	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
+	console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
 	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
-	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
+	// generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
 }
 
 function draw() {
@@ -269,9 +268,11 @@ function createGridOutline(
 					dist,
 					pMaxDistFromCenter
 				);
+				// Store the cell in a master array
 				pCellsArray.push(cell);
 
-				// _cellsByGridSize[cell.gridSize].push(cell);
+				// Also keep a reference to the cell: placing it in an array that's at an index that matches the cell's grid size
+				_cellsByGridSize[cell.gridSize].push(cell);
 
 				// Count how many squares we're creating in each "outline"
 				sqCount++;
@@ -394,27 +395,63 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 	// - get cells gridSize,
 	// - find the corresponding index in the _gridSizes array
 	// - use that index against the pGridSquaresCount array to extract the number of squares in that grid
-	for (let i = 0; i < pCells.length; i++) {
-		const cell = pCells[i];
-		const gridSize = cell.gridSize;
+	// for (let i = 0; i < pCells.length; i++) {
+	// 	const cell = pCells[i];
+	// 	const gridSize = cell.gridSize;
 
-		const gridSizeIndex = pGridSizes.indexOf(gridSize);
+	// 	const gridSizeIndex = pGridSizes.indexOf(gridSize);
 
-		const numSquares = pGridSquaresCount[gridSizeIndex];
+	// 	const numSquares = pGridSquaresCount[gridSizeIndex];
 
-		console.log(
-			'### :: gridSize:: gridSizeIndex:: numSquares=',
-			gridSize,
-			gridSizeIndex,
-			numSquares
-		);
+	// 	console.log(
+	// 		'### :: gridSize:: gridSizeIndex:: numSquares=',
+	// 		gridSize,
+	// 		gridSizeIndex,
+	// 		numSquares
+	// 	);
 
-		circleRadius = 0;
+	// 	circleRadius = 0;
+
+	// 	for (var k = 0; k < numSquares; k++) {
+	// 		const theta = (k * TWO_PI) / numSquares; // radial angle of the square
+	// 		const radialTargetX = _centerX + circleRadius * cos(theta);
+	// 		const radialTargetY = _centerY + circleRadius * sin(theta);
+	// 	}
+	// }
+
+	// Loop through gridSizes array
+	// Use each value as an index to reference the cells stored in _cellsByGridSize
+	// The number in each array would be the value for numSquares
+	// Still need to work out a set of suitable circle radii
+
+	// i=1 means ignore the 1x1 grid
+	for (let i = 1; i < pGridSizes.length; i++) {
+		let gridSize = pGridSizes[i];
+		const cellsArr = _cellsByGridSize[gridSize];
+
+		console.log('### cellsArr:: =', cellsArr);
+
+		let circleRadius = 15.55 * gridSize;
+
+		let numSquares = cellsArr.length;
 
 		for (var k = 0; k < numSquares; k++) {
 			const theta = (k * TWO_PI) / numSquares; // radial angle of the square
 			const radialTargetX = _centerX + circleRadius * cos(theta);
 			const radialTargetY = _centerY + circleRadius * sin(theta);
+
+			let cell = cellsArr[k];
+			cell.radialTargetX = radialTargetX;
+			cell.radialTargetY = radialTargetY;
+
+			// push(); // save the current transform
+			// translate(cell.radialTargetX, cell.radialTargetY); // move to cell centre
+
+			// rotate(theta); // rotate around that point
+
+			// // if (i % 2 === 1) {
+			// square(0, 0, _sqSize); // since we've transformed to the squares centre, we can draw the square from there
+			// }
 		}
 	}
 }
