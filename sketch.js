@@ -3,16 +3,20 @@ const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
 const _whiteColor = 'rgba(255, 255, 255, 0.7)';
 
+const _inAGeorgNeesStylee = true;
+
 const _canvasW = 1000;
 const _canvasH = 600;
 
 const _sqSize = 20;
-const unit = _sqSize / 9;
+const _unit = _sqSize / 9;
 
 const _centerX = _canvasW / 2;
 const _centerY = _canvasH / 2;
 
 let _maxDistFromCenter = null;
+
+const _maxGridSize = 15;
 
 const _gridSizes = [];
 const _gridStartPositions = [];
@@ -30,7 +34,6 @@ function setup() {
 	background(_backgroundColor);
 
 	strokeWeight(2);
-	stroke(_greenColor);
 
 	noFill();
 
@@ -38,19 +41,19 @@ function setup() {
 
 	rectMode(CENTER); // draw square from centre
 
-	// createEdgedGrid(3, 3, 10, 10, _sqSize);
+	// createGridOutline(3, 3, 10, 10, _sqSize);
 
-	for (let i = 1; i <= 16; i += 2) {
+	// Generate set of odd numbers - these will be the sizes of our grids e.g. 3x3, 5x5 etc
+	for (let i = 1; i <= _maxGridSize + 1; i += 2) {
 		// 1, 3, 5, 7, 9...
 		_gridSizes.push(i);
 	}
 
+	// Use the grid sizes to calculate the start position of each of our grid outlines, moving out from the centre
 	for (let i = 0; i < _gridSizes.length; i++) {
 		const gridSize = _gridSizes[i];
 
-		console.log('\n### gridSize:: =', gridSize);
-
-		// create set of start coords starting at centre and moving 1.5 square up and to the left on each tick
+		// Create set of start coords starting at centre and moving 1.5 square up and to the left on each tick
 		let gridStartX = _centerX - _sqSize * (gridSize / 2);
 		let gridStartY = _centerY - _sqSize * (gridSize / 2);
 
@@ -59,36 +62,41 @@ function setup() {
 		gridStartX += _sqSize / 2;
 		gridStartY += _sqSize / 2;
 
-		console.log('### gridStartX:: =', gridStartX);
-		console.log('### gridStartY:: =', gridStartY);
+		// console.log('### gridStartX:: =', gridStartX);
+		// console.log('### gridStartY:: =', gridStartY);
 
-		// create edged grid
-		const numSquaresCreated = createEdgedGrid(
+		_gridStartPositions.push([gridStartX, gridStartY]);
+
+		// Calc top left square's dist from centre point
+		if (i === _gridSizes.length - 1) {
+			// const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
+			const dx = gridStartX - _centerX;
+			const dy = gridStartY - _centerY;
+			_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
+		}
+	}
+
+	// Loop thru the grid sizes & start positions to create a series of grid outlines
+	for (let i = 0; i < _gridSizes.length; i++) {
+		const gridSize = _gridSizes[i];
+
+		const [gridStartX, gridStartY] = _gridStartPositions[i];
+
+		// Create grid outline
+		const numSquaresCreated = createGridOutline(
 			gridSize,
 			gridSize,
 			gridStartX,
 			gridStartY,
 			_sqSize,
-			i
+			_maxDistFromCenter
 		);
 		_gridSquaresCount.push(numSquaresCreated);
-
-		_gridStartPositions.push([gridStartX, gridStartY]);
 	}
 
-	// console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSizes=', _gridSizes);
+	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
-
-	// Calc top left square's dist from centre point
-	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
-	const dx = lastGridCell[0] - _centerX;
-	const dy = lastGridCell[1] - _centerY;
-	_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
-
-	// Now we know the maximum distance a square can be from the center
-	// - generate a stroke colour based on that distnace
-	generateCellStrokeColors(_cells, _maxDistFromCenter);
 
 	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
 	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
@@ -98,8 +106,6 @@ function draw() {
 	background(_backgroundColor);
 
 	updatePositions();
-
-	// stroke(_greenColor); // Not needed if we're stroking squares in a Georg Ness stylee
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
@@ -211,7 +217,14 @@ const move = function (cell, index) {
 };
 
 // Create a grid "outline" i.e. only draw the squares that represent the outer edge of the grid
-function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
+function createGridOutline(
+	pColumns,
+	pRows,
+	pStartX,
+	pStartY,
+	pSize,
+	pMaxDistFromCenter
+) {
 	let sqCount = 0;
 	for (let i = 0; i < pColumns; i++) {
 		for (let j = 0; j < pRows; j++) {
@@ -225,7 +238,7 @@ function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
 				const dy = pStartY - _centerY;
 				const dist = Math.sqrt(dx * dx + dy * dy);
 
-				createCell(x, y, pSize, pColumns, dist);
+				createCell(x, y, pSize, pColumns, dist, pMaxDistFromCenter);
 
 				// Count how many squares we're creating in each "outline"
 				sqCount++;
@@ -236,10 +249,39 @@ function createEdgedGrid(pColumns, pRows, pStartX, pStartY, pSize, count = 0) {
 }
 
 // TODO - either use gloabl vars everywhere *or* pass _cells as arg
-const createCell = function (pX, pY, pSize, pColumns, pDist) {
+const createCell = function (
+	pX,
+	pY,
+	pSize,
+	pColumns,
+	pDist,
+	pMaxDistFromCenter
+) {
 	const collisionPadding = 0;
 	const imageW = pSize + collisionPadding; // make border we use to detect collision slightly larger that actual square
 	const imageH = pSize + collisionPadding;
+
+	// Now we know the maximum distance a square can be from the centre
+	// - generate a stroke colour based on that distance
+	let outerStrokeColor;
+	let innerStrokeColor;
+
+	const chance = (pDist / pMaxDistFromCenter) * 100;
+
+	var isOuterBlue = random(0, 100) < chance;
+	if (isOuterBlue) {
+		outerStrokeColor = _blueColor;
+	} else {
+		outerStrokeColor = _greenColor;
+	}
+
+	var isInnerBlue = random(0, 100) < chance;
+	if (isInnerBlue) {
+		innerStrokeColor = _blueColor;
+	} else {
+		innerStrokeColor = _greenColor;
+	}
+	// --
 
 	const cellObj = {
 		width: imageW,
@@ -260,20 +302,24 @@ const createCell = function (pX, pY, pSize, pColumns, pDist) {
 		inCollision: false,
 		gridSize: pColumns,
 		distFromCenter: pDist,
-		outerStrokeColor: null,
+		outerStrokeColor,
+		innerStrokeColor,
 	};
 
 	_cells.push(cellObj);
 };
 
 function drawCell(pCell, pSqSize) {
-	stroke(pCell.outerStrokeColor);
-	square(pCell.x, pCell.y, unit * 7);
+	if (_inAGeorgNeesStylee) {
+		stroke(pCell.outerStrokeColor);
+		square(pCell.x, pCell.y, _unit * 7);
 
-	stroke(pCell.innerStrokeColor);
-	square(pCell.x, pCell.y, unit * 3);
-
-	// square(pCell.x, pCell.y, pSqSize);
+		stroke(pCell.innerStrokeColor);
+		square(pCell.x, pCell.y, _unit * 3);
+	} else {
+		stroke(_greenColor);
+		square(pCell.x, pCell.y, pSqSize);
+	}
 }
 
 // TODO - either use gloabl vars everywhere *or* pass _gridStartPositions as arg
