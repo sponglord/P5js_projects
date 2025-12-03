@@ -69,14 +69,13 @@ function setup() {
 		// console.log('### gridStartY:: =', gridStartY);
 
 		_gridStartPositions.push([gridStartX, gridStartY]);
-
-		// Calc top left square's dist from centre point
-		if (i === _gridSizes.length - 1) {
-			const dx = gridStartX - _centerX;
-			const dy = gridStartY - _centerY;
-			_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
-		}
 	}
+
+	// Calc top left square's dist from centre point
+	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
+	const dx = lastGridCell[0] - _centerX;
+	const dy = lastGridCell[1] - _centerY;
+	_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
 
 	// Loop thru the grid sizes & start positions to create a series of grid outlines
 	for (let i = 0; i < _gridSizes.length; i++) {
