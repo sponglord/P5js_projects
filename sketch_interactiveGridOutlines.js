@@ -448,9 +448,9 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 
 			// rotate(theta); // rotate around that point
 
-			// // if (i % 2 === 1) {
 			// square(0, 0, _sqSize); // since we've transformed to the squares centre, we can draw the square from there
-			// }
+
+			// pop();
 		}
 	}
 }

@@ -16,7 +16,7 @@ const _centerY = _canvasH / 2;
 
 let _maxDistFromCenter = null;
 
-const _maxGridSize = 15;
+const _maxGridSize = 15; // 15
 
 const _gridSizes = [];
 const _gridStartPositions = [];
@@ -45,8 +45,8 @@ function setup() {
 	// createGridOutline(3, 3, 10, 10, _sqSize);
 
 	// Generate set of odd numbers - these will be the sizes of our grids e.g. 3x3, 5x5 etc
-	for (let i = 1; i <= _maxGridSize + 1; i += 2) {
-		// 1, 3, 5, 7, 9...
+	for (let i = 3; i <= _maxGridSize + 1; i += 2) {
+		// 3, 5, 7, 9...
 		_gridSizes.push(i);
 		// Create a set of empty arrays stored at an index based on their grid size
 		_cellsByGridSize[i] = [];
@@ -88,10 +88,7 @@ function setup() {
 			gridSize,
 			gridSize,
 			gridStartX,
-			gridStartY,
-			_sqSize,
-			_maxDistFromCenter,
-			_cells
+			gridStartY
 		);
 		_gridSquaresCount.push(numSquaresCreated);
 	}
@@ -101,158 +98,165 @@ function setup() {
 	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
+	// for (let i = 0; i < _gridSizes.length; i++) {
+	// 	let gridSize = _gridSizes[i];
+	// 	const cellsArr = _cellsByGridSize[gridSize];
+
+	// 	arrangeSquaresInCircle(
+	// 		cellsArr,
+	// 		_sqSize,
+	// 		_centerX,
+	// 		_centerY,
+	// 		gridSize * 10
+	// 	);
+	// }
+
 	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
-	// generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
+	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
 }
 
-function draw() {
-	background(_backgroundColor);
+// function draw() {
+// 	background(_backgroundColor);
 
-	updatePositions();
+// 	updatePositions();
 
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
-		drawCell(cell, _sqSize, _unit);
-	}
+// 	for (let i = 0; i < _cells.length; i++) {
+// 		const cell = _cells[i];
+// 		drawCell(cell, _sqSize, _unit);
+// 	}
 
-	// Get the size of the outer grid e.g. 15x15
-	const gridSize = _gridSizes[_gridSizes.length - 1];
-	const coords = getGridCell(
-		mouseX,
-		mouseY,
-		gridSize,
-		gridSize,
-		_sqSize,
-		_gridStartPositions
-	);
+// 	// Get the size of the outer grid e.g. 15x15
+// 	const gridSize = _gridSizes[_gridSizes.length - 1];
+// 	const coords = getGridCell(
+// 		mouseX,
+// 		mouseY,
+// 		gridSize,
+// 		gridSize,
+// 		_sqSize,
+// 		_gridStartPositions
+// 	);
 
-	if (coords) {
-		stroke(_whiteColor);
-		square(coords.cellX, coords.cellY, _sqSize);
-	}
-}
+// 	if (coords) {
+// 		stroke(_whiteColor);
+// 		square(coords.cellX, coords.cellY, _sqSize);
+// 	}
+// }
 
 function mousePressed() {
 	console.log('### mouseX:: =', mouseX);
 	console.log('### mouseY:: =', mouseY);
 
-	// Get the size of the outer grid e.g. 15x15
-	const gridSize = _gridSizes[_gridSizes.length - 1];
-	const coords = getGridCell(
-		mouseX,
-		mouseY,
-		gridSize, // i.e. columns
-		gridSize, // i.e. rows
-		_sqSize,
-		_gridStartPositions
-	);
-	console.log('### coords:: =', coords);
+	// 	// Get the size of the outer grid e.g. 15x15
+	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
+	// 	const coords = getGridCell(
+	// 		mouseX,
+	// 		mouseY,
+	// 		gridSize, // i.e. columns
+	// 		gridSize, // i.e. rows
+	// 		_sqSize,
+	// 		_gridStartPositions
+	// 	);
+	// 	console.log('### coords:: =', coords);
 
-	// if we're clicking within grid
-	if (coords) {
-		_checkForCollision = true;
-	}
+	// 	// if we're clicking within grid
+	// 	if (coords) {
+	// 		_checkForCollision = true;
+	// 	}
 }
 
-function mouseReleased() {
-	_checkForCollision = false;
+// function mouseReleased() {
+// 	_checkForCollision = false;
 
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
-		cell.inCollision = false;
-	}
-}
+// 	for (let i = 0; i < _cells.length; i++) {
+// 		const cell = _cells[i];
+// 		cell.inCollision = false;
+// 	}
+// }
 
-const updatePositions = function () {
-	if (_checkForCollision) {
-		checkForCollision();
-	}
+// const updatePositions = function () {
+// 	if (_checkForCollision) {
+// 		checkForCollision(_cells);
+// 	}
 
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
+// 	for (let i = 0; i < _cells.length; i++) {
+// 		const cell = _cells[i];
 
-		move(cell, i);
-	}
-};
+// 		move(cell, i);
+// 	}
+// };
 
-const checkForCollision = function () {
-	const spring = 0.05;
+// This function could make sense outside this sketch & therefore should have
+// all the required values passed as arguments
+// const checkForCollision = function (pCellsArr) {
+// 	const spring = 0.05;
 
-	const numCells = _cells.length;
+// 	const numCells = pCellsArr.length;
 
-	for (let i = 0; i < numCells - 1; i++) {
-		const cell0 = _cells[i];
+// 	for (let i = 0; i < numCells - 1; i++) {
+// 		const cell0 = pCellsArr[i];
 
-		cell0.inCollision = false;
+// 		cell0.inCollision = false;
 
-		for (let j = i + 1; j < numCells; j++) {
-			const cell1 = _cells[j];
+// 		for (let j = i + 1; j < numCells; j++) {
+// 			const cell1 = pCellsArr[j];
 
-			cell1.inCollision = false;
+// 			cell1.inCollision = false;
 
-			const dx = cell1.x - cell0.x;
-			const dy = cell1.y - cell0.y;
-			const dist = Math.sqrt(dx * dx + dy * dy);
-			const minDist = cell0.radius + cell1.radius;
+// 			const dx = cell1.x - cell0.x;
+// 			const dy = cell1.y - cell0.y;
+// 			const dist = Math.sqrt(dx * dx + dy * dy);
+// 			const minDist = cell0.radius + cell1.radius;
 
-			if (dist <= minDist) {
-				// const angle = Math.atan2(dy, dx);
-				const tx = cell0.x + (dx / dist) * minDist;
-				const ty = cell0.y + (dy / dist) * minDist;
-				const ax = (tx - cell1.x) * spring;
-				const ay = (ty - cell1.y) * spring;
-				cell0.vx -= ax * _speed;
-				cell0.vy -= ay * _speed;
-				cell1.vx += ax * _speed;
-				cell1.vy += ay * _speed;
-				//
-				cell0.inCollision = true;
-				cell1.inCollision = true;
-			} else {
-				cell1.inCollision = false;
-			}
-		}
-	}
-};
+// 			if (dist <= minDist) {
+// 				// const angle = Math.atan2(dy, dx);
+// 				const tx = cell0.x + (dx / dist) * minDist;
+// 				const ty = cell0.y + (dy / dist) * minDist;
+// 				const ax = (tx - cell1.x) * spring;
+// 				const ay = (ty - cell1.y) * spring;
+// 				cell0.vx -= ax * _speed;
+// 				cell0.vy -= ay * _speed;
+// 				cell1.vx += ax * _speed;
+// 				cell1.vy += ay * _speed;
+// 				//
+// 				cell0.inCollision = true;
+// 				cell1.inCollision = true;
+// 			} else {
+// 				cell1.inCollision = false;
+// 			}
+// 		}
+// 	}
+// };
 
-const move = function (cell, index) {
-	const easing = 0.08;
-	const bounce = -1;
+// const move = function (cell, index) {
+// 	const easing = 0.08;
+// 	const bounce = -1;
 
-	if (_gotoTarget) {
-		// If image is not undergoing collision calculations - set it on it's way to it's target position
-		if (!cell.inCollision) {
-			const dx = cell.targetX - cell.x;
-			const dy = cell.targetY - cell.y;
+// 	if (_gotoTarget) {
+// 		// If image is not undergoing collision calculations - set it on it's way to it's target position
+// 		if (!cell.inCollision) {
+// 			const dx = cell.targetX - cell.x;
+// 			const dy = cell.targetY - cell.y;
 
-			cell.vx = dx * easing;
-			cell.vy = dy * easing;
-		}
-	}
+// 			cell.vx = dx * easing;
+// 			cell.vy = dy * easing;
+// 		}
+// 	}
 
-	// Change the img's position by its new velocity
-	cell.x += cell.vx * _speed;
-	cell.y += cell.vy * _speed;
-};
+// 	// Change the img's position by its new velocity
+// 	cell.x += cell.vx * _speed;
+// 	cell.y += cell.vy * _speed;
+// };
 
+// TODO - this function only makes sense within this sketch - so can use globals
 // Create a grid "outline" i.e. only draw the squares that represent the outer edge of the grid
-// TODO pass _centerX & _centerY as args
-function createGridOutline(
-	pColumns,
-	pRows,
-	pStartX,
-	pStartY,
-	pSqSize,
-	pMaxDistFromCenter,
-	pCellsArray
-) {
+function createGridOutline(pColumns, pRows, pStartX, pStartY) {
 	let sqCount = 0;
 	for (let i = 0; i < pColumns; i++) {
 		for (let j = 0; j < pRows; j++) {
 			// Only draw outer colums and rows
 			if (i === 0 || i === pColumns - 1 || j === 0 || j === pRows - 1) {
-				const x = pStartX + pSqSize * i;
-				const y = pStartY + pSqSize * j;
+				const x = pStartX + _sqSize * i;
+				const y = pStartY + _sqSize * j;
 
 				// Calculate the distance of the starting square from the centre point
 				const dx = pStartX - _centerX;
@@ -262,13 +266,12 @@ function createGridOutline(
 				let cell = createCell(
 					x,
 					y,
-					pSqSize,
+
 					pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
-					dist,
-					pMaxDistFromCenter
+					dist
 				);
 				// Store the cell in a master array
-				pCellsArray.push(cell);
+				_cells.push(cell);
 
 				// Also keep a reference to the cell: placing it in an array that's at an index that matches the cell's grid size
 				_cellsByGridSize[cell.gridSize].push(cell);
@@ -281,27 +284,18 @@ function createGridOutline(
 	return sqCount;
 }
 
-// TODO - either use gloabl vars everywhere *or* pass as args
-// _blueColor & _greenColor
-// _canvasW & _canvasH
-const createCell = function (
-	pX,
-	pY,
-	pSqSize,
-	pColumns,
-	pDist,
-	pMaxDistFromCenter
-) {
+// This function only makes sense within this sketch - so can use globals
+const createCell = function (pX, pY, pColumns, pDist) {
 	const collisionPadding = 0;
-	const imageW = pSqSize + collisionPadding; // make border we use to detect collision slightly larger that actual square
-	const imageH = pSqSize + collisionPadding;
+	const imageW = _sqSize + collisionPadding; // make border we use to detect collision slightly larger that actual square
+	const imageH = _sqSize + collisionPadding;
 
 	// Now we know the maximum distance a square can be from the centre
 	// - generate a stroke colour based on that distance
 	let outerStrokeColor;
 	let innerStrokeColor;
 
-	const chance = (pDist / pMaxDistFromCenter) * 100;
+	const chance = (pDist / _maxDistFromCenter) * 100;
 
 	var isOuterBlue = random(0, 100) < chance;
 	if (isOuterBlue) {
@@ -332,6 +326,8 @@ const createCell = function (
 		gridTargetY: pY,
 		radialTargetX: null,
 		radialTargetY: null,
+		theta: null,
+		circleRadius: null,
 		targetX: pX,
 		targetY: pY,
 		inCollision: false,
@@ -344,19 +340,43 @@ const createCell = function (
 	return cellObj;
 };
 
-function drawCell(pCell, pSqSize, pUnit) {
+// Already uses p5 globals like stroke & square, so can use other globals
+function drawCell(pCell) {
 	if (_inAGeorgNeesStylee) {
 		stroke(pCell.outerStrokeColor);
-		square(pCell.x, pCell.y, pUnit * 7);
+		square(pCell.x, pCell.y, _unit * 7);
 
 		stroke(pCell.innerStrokeColor);
-		square(pCell.x, pCell.y, pUnit * 3);
+		square(pCell.x, pCell.y, _unit * 3);
 	} else {
 		stroke(_greenColor);
-		square(pCell.x, pCell.y, pSqSize);
+		square(pCell.x, pCell.y, _sqSize);
 	}
 }
 
+// Already uses p5 globals like stroke & square, so can use other globals
+function drawRotatedCell(pCell) {
+	push(); // save the current transform
+	translate(pCell.radialTargetX, pCell.radialTargetY); // move to cell centre
+
+	rotate(pCell.theta); // rotate around that point
+
+	if (_inAGeorgNeesStylee) {
+		stroke(pCell.outerStrokeColor);
+		square(0, 0, _unit * 7);
+
+		stroke(pCell.innerStrokeColor);
+		square(0, 0, _unit * 3);
+	} else {
+		stroke(_greenColor);
+		square(0, 0, _sqSize);
+	}
+
+	pop();
+}
+
+// This function could make sense outside this sketch & therefore should have
+// all the required values passed as arguments
 function getGridCell(
 	pMouseX,
 	pMouseY,
@@ -365,13 +385,13 @@ function getGridCell(
 	pSqSize,
 	pGridStartPositions
 ) {
-	const firstCell = pGridStartPositions[pGridStartPositions.length - 1];
+	const firstCell = pGridStartPositions[pGridStartPositions.length - 1]; // i.e. cell at 0,0 postition (top left)
 
 	const startX = firstCell[0];
 	const startY = firstCell[1];
 
-	// const col = floor(pMouseX / size); // is the regular way
-	// But, we need to take into account where we've started drawing the squares from (startX)
+	// const col = floor(pMouseX / pSqSize); // is the regular way
+	// But, we need to take into account where we've started drawing the squares from (startX, startY)
 	// and the fact that we're drawing the squares from the centre, not the top left (pSize / 2)
 	const adjustedMouseX = pMouseX - startX + pSqSize / 2;
 	const adjustedMouseY = pMouseY - startY + pSqSize / 2;
@@ -389,48 +409,21 @@ function getGridCell(
 	return null;
 }
 
+// TODO - this function only makes sense within this sketch - so can use globals
 function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
-	// For each cell, we can use it's .gridSize to work out how many squares are in it's grid...
-	// - get cells gridSize,
-	// - find the corresponding index in the _gridSizes array
-	// - use that index against the pGridSquaresCount array to extract the number of squares in that grid
-	// for (let i = 0; i < pCells.length; i++) {
-	// 	const cell = pCells[i];
-	// 	const gridSize = cell.gridSize;
-
-	// 	const gridSizeIndex = pGridSizes.indexOf(gridSize);
-
-	// 	const numSquares = pGridSquaresCount[gridSizeIndex];
-
-	// 	console.log(
-	// 		'### :: gridSize:: gridSizeIndex:: numSquares=',
-	// 		gridSize,
-	// 		gridSizeIndex,
-	// 		numSquares
-	// 	);
-
-	// 	circleRadius = 0;
-
-	// 	for (var k = 0; k < numSquares; k++) {
-	// 		const theta = (k * TWO_PI) / numSquares; // radial angle of the square
-	// 		const radialTargetX = _centerX + circleRadius * cos(theta);
-	// 		const radialTargetY = _centerY + circleRadius * sin(theta);
-	// 	}
-	// }
-
 	// Loop through gridSizes array
 	// Use each value as an index to reference the cells stored in _cellsByGridSize
-	// The number in each array would be the value for numSquares
-	// Still need to work out a set of suitable circle radii
+	// The number in each cells array would be the value for numSquares
+	// Work out a set of suitable circle radii
 
-	// i=1 means ignore the 1x1 grid
-	for (let i = 1; i < pGridSizes.length; i++) {
+	for (let i = 0; i < pGridSizes.length; i++) {
 		let gridSize = pGridSizes[i];
 		const cellsArr = _cellsByGridSize[gridSize];
 
-		console.log('### cellsArr:: =', cellsArr);
+		// let circleRadius = 11 * gridSize;
+		let circleRadius = 2 * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
 
-		let circleRadius = 15.55 * gridSize;
+		// console.log('### ::circleRadius =', circleRadius);
 
 		let numSquares = cellsArr.length;
 
@@ -442,15 +435,40 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 			let cell = cellsArr[k];
 			cell.radialTargetX = radialTargetX;
 			cell.radialTargetY = radialTargetY;
+			cell.theta = theta;
+			cell.circleRadius = circleRadius;
 
-			// push(); // save the current transform
-			// translate(cell.radialTargetX, cell.radialTargetY); // move to cell centre
-
-			// rotate(theta); // rotate around that point
-
-			// // if (i % 2 === 1) {
-			// square(0, 0, _sqSize); // since we've transformed to the squares centre, we can draw the square from there
-			// }
+			// // square(0, 0, _sqSize); // since we've transformed to the squares centre, we can draw the square from there
+			drawRotatedCell(cell);
 		}
 	}
 }
+
+const arrangeSquaresInCircle = function (
+	pCellsArr,
+	pSqSize,
+	pStartX,
+	pStartY,
+	pCircleRadius
+) {
+	let numSquares = pCellsArr.length;
+
+	for (var i = 0; i < numSquares; i++) {
+		const theta = (i * TWO_PI) / numSquares; // radial angle of the square
+
+		const targetX = pStartX + pCircleRadius * cos(theta);
+		const targetY = pStartY + pCircleRadius * sin(theta);
+
+		console.log('\n### targetX:: =', targetX);
+		console.log('### targetY:: =', targetY);
+
+		push(); // save the current transform
+		translate(targetX, targetY); // move to cell centre
+
+		rotate(theta); // rotate around that point
+
+		square(0, 0, pSqSize); // since we've transformed to the squares centre, we can draw the square from there
+
+		pop(); // restore the original transform
+	}
+};
