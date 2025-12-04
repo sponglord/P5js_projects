@@ -98,10 +98,10 @@ function setup() {
 	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
+	// setTimeout(() => {
 	// for (let i = 0; i < _gridSizes.length; i++) {
 	// 	let gridSize = _gridSizes[i];
 	// 	const cellsArr = _cellsByGridSize[gridSize];
-
 	// 	arrangeSquaresInCircle(
 	// 		cellsArr,
 	// 		_sqSize,
@@ -110,6 +110,7 @@ function setup() {
 	// 		gridSize * 10
 	// 	);
 	// }
+	// }, 3000);
 
 	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
 	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
@@ -363,7 +364,7 @@ function drawRotatedCell(pCell) {
 
 	if (_inAGeorgNeesStylee) {
 		stroke(pCell.outerStrokeColor);
-		square(0, 0, _unit * 7);
+		square(0, 0, _unit * 7); // since we've transformed to the square's centre, we can draw the square from there
 
 		stroke(pCell.innerStrokeColor);
 		square(0, 0, _unit * 3);
@@ -428,7 +429,9 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 		let numSquares = cellsArr.length;
 
 		for (var k = 0; k < numSquares; k++) {
-			const theta = (k * TWO_PI) / numSquares; // radial angle of the square
+			let theta = (k * TWO_PI) / numSquares; // radial angle of the square
+			theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
+
 			const radialTargetX = _centerX + circleRadius * cos(theta);
 			const radialTargetY = _centerY + circleRadius * sin(theta);
 
@@ -438,8 +441,10 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 			cell.theta = theta;
 			cell.circleRadius = circleRadius;
 
-			// // square(0, 0, _sqSize); // since we've transformed to the squares centre, we can draw the square from there
+			// setTimeout(() => {
+
 			drawRotatedCell(cell);
+			// }, 100 * (k + 1));
 		}
 	}
 }
@@ -453,12 +458,14 @@ const arrangeSquaresInCircle = function (
 ) {
 	let numSquares = pCellsArr.length;
 
-	for (var i = 0; i < numSquares; i++) {
-		const theta = (i * TWO_PI) / numSquares; // radial angle of the square
+	for (let i = 0; i < numSquares; i++) {
+		let theta = (i * TWO_PI) / numSquares; // radial angle of the square
+		theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
 
 		const targetX = pStartX + pCircleRadius * cos(theta);
 		const targetY = pStartY + pCircleRadius * sin(theta);
 
+		// setTimeout(() => {
 		console.log('\n### targetX:: =', targetX);
 		console.log('### targetY:: =', targetY);
 
@@ -470,5 +477,6 @@ const arrangeSquaresInCircle = function (
 		square(0, 0, pSqSize); // since we've transformed to the squares centre, we can draw the square from there
 
 		pop(); // restore the original transform
+		// }, 100 * (i + 1));
 	}
 };
