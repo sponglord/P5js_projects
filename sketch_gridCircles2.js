@@ -163,9 +163,9 @@ function drawRotatedCell(pCell) {
 }
 
 const updatePositions = function () {
-	// 	if (_checkForCollision) {
-	// 		checkForCollision(_cells);
-	// 	}
+	if (_checkForCollision) {
+		checkForCollision(_cells);
+	}
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
@@ -175,45 +175,47 @@ const updatePositions = function () {
 
 // This function could make sense outside this sketch & therefore should have
 // all the required values passed as arguments
-// const checkForCollision = function (pCellsArr) {
-// 	const spring = 0.05;
+const checkForCollision = function (pCellsArr) {
+	const spring = 0.05;
 
-// 	const numCells = pCellsArr.length;
+	const numCells = pCellsArr.length;
 
-// 	for (let i = 0; i < numCells - 1; i++) {
-// 		const cell0 = pCellsArr[i];
+	for (let i = 0; i < numCells - 1; i++) {
+		const cell0 = pCellsArr[i];
 
-// 		cell0.inCollision = false;
+		// let {x0, y0} = cell0;
 
-// 		for (let j = i + 1; j < numCells; j++) {
-// 			const cell1 = pCellsArr[j];
+		cell0.inCollision = false;
 
-// 			cell1.inCollision = false;
+		for (let j = i + 1; j < numCells; j++) {
+			const cell1 = pCellsArr[j];
 
-// 			const dx = cell1.x - cell0.x;
-// 			const dy = cell1.y - cell0.y;
-// 			const dist = Math.sqrt(dx * dx + dy * dy);
-// 			const minDist = cell0.radius + cell1.radius;
+			cell1.inCollision = false;
 
-// 			if (dist <= minDist) {
-// 				// const angle = Math.atan2(dy, dx);
-// 				const tx = cell0.x + (dx / dist) * minDist;
-// 				const ty = cell0.y + (dy / dist) * minDist;
-// 				const ax = (tx - cell1.x) * spring;
-// 				const ay = (ty - cell1.y) * spring;
-// 				cell0.vx -= ax * _speed;
-// 				cell0.vy -= ay * _speed;
-// 				cell1.vx += ax * _speed;
-// 				cell1.vy += ay * _speed;
-// 				//
-// 				cell0.inCollision = true;
-// 				cell1.inCollision = true;
-// 			} else {
-// 				cell1.inCollision = false;
-// 			}
-// 		}
-// 	}
-// };
+			const dx = cell1.x - cell0.x;
+			const dy = cell1.y - cell0.y;
+			const dist = Math.sqrt(dx * dx + dy * dy);
+			const minDist = cell0.radius + cell1.radius;
+
+			if (dist <= minDist) {
+				// const angle = Math.atan2(dy, dx);
+				const tx = cell0.x + (dx / dist) * minDist;
+				const ty = cell0.y + (dy / dist) * minDist;
+				const ax = (tx - cell1.x) * spring;
+				const ay = (ty - cell1.y) * spring;
+				cell0.vx -= ax * _speed;
+				cell0.vy -= ay * _speed;
+				cell1.vx += ax * _speed;
+				cell1.vy += ay * _speed;
+				//
+				cell0.inCollision = true;
+				cell1.inCollision = true;
+			} else {
+				cell1.inCollision = false;
+			}
+		}
+	}
+};
 
 function move(pCell) {
 	// One batch extraction of props
@@ -266,18 +268,18 @@ function mousePressed() {
 
 	// 	// if we're clicking within grid
 	// 	if (coords) {
-	// 		_checkForCollision = true;
+	_checkForCollision = true;
 	// 	}
 }
 
-// function mouseReleased() {
-// 	_checkForCollision = false;
+function mouseReleased() {
+	_checkForCollision = false;
 
-// 	for (let i = 0; i < _cells.length; i++) {
-// 		const cell = _cells[i];
-// 		cell.inCollision = false;
-// 	}
-// }
+	for (let i = 0; i < _cells.length; i++) {
+		const cell = _cells[i];
+		cell.inCollision = false;
+	}
+}
 
 // TODO - this function only makes sense within this sketch - so can use globals
 // Create a grid "outline" i.e. only draw the squares that represent the outer edge of the grid
