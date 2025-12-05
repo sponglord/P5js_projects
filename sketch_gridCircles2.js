@@ -26,6 +26,8 @@ const _cellsByGridSize = []; // currently don't need this
 
 let _checkForCollision = false;
 
+let _isRadialGrid = true;
+
 // We multiply the particle's velocity by this value so we have an overall control of the speed
 const _speed = 1; // base value = 1
 
@@ -87,10 +89,10 @@ function setup() {
 		_gridSquaresCount.push(numSquaresCreated);
 	}
 
-	console.log('### :: _gridSizes=', _gridSizes);
-	console.log('### :: _cellsByGridSize=', _cellsByGridSize);
-	console.log('### :: gridStartPositions=', _gridStartPositions);
-	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
+	// console.log('### :: _gridSizes=', _gridSizes);
+	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
+	// console.log('### :: gridStartPositions=', _gridStartPositions);
+	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 }
 
 function draw() {
@@ -100,25 +102,37 @@ function draw() {
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
-		// drawCell(cell);
-		drawRotatedCell(cell);
+
+		if (!_isRadialGrid) {
+			drawCell(cell);
+		} else {
+			drawRotatedCell(cell);
+		}
 	}
 
-	// 	// Get the size of the outer grid e.g. 15x15
-	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
-	// 	const coords = getGridCell(
-	// 		mouseX,
-	// 		mouseY,
-	// 		gridSize,
-	// 		gridSize,
-	// 		_sqSize,
-	// 		_gridStartPositions
-	// 	);
+	if (!_isRadialGrid) {
+		// Get the size of the outer grid e.g. 15x15
+		const gridSize = _gridSizes[_gridSizes.length - 1];
+		const coords = getGridCell(
+			mouseX,
+			mouseY,
+			gridSize,
+			gridSize,
+			_sqSize,
+			_gridStartPositions
+		);
 
-	// 	if (coords) {
-	// 		stroke(_whiteColor);
-	// 		square(coords.cellX, coords.cellY, _sqSize);
-	// 	}
+		// if we're within grid
+		if (coords) {
+			stroke(_whiteColor);
+			square(coords.cellX, coords.cellY, _sqSize);
+		}
+	} else {
+		const hit = getRadialCell(mouseX, mouseY);
+		if (hit) {
+			drawRotatedCell(hit.cell, true);
+		}
+	}
 }
 
 // Already uses p5 globals like stroke & square, so can use other globals
@@ -139,7 +153,7 @@ function drawCell(pCell) {
 }
 
 // Already uses p5 globals like stroke & square, so can use other globals
-function drawRotatedCell(pCell) {
+function drawRotatedCell(pCell, pIsWhite) {
 	const { x, y, outerStrokeColor, innerStrokeColor, theta } = pCell;
 
 	push(); // save the current transform
@@ -148,7 +162,10 @@ function drawRotatedCell(pCell) {
 
 	rotate(theta); // rotate around that point
 
-	if (_inAGeorgNeesStylee) {
+	if (pIsWhite) {
+		stroke(_whiteColor);
+		square(0, 0, _sqSize);
+	} else if (_inAGeorgNeesStylee) {
 		stroke(outerStrokeColor);
 		square(0, 0, _unit * 7); // since we've transformed to the square's centre, we can draw the square from there
 
@@ -277,22 +294,24 @@ function mousePressed() {
 	console.log('### mouseX:: =', mouseX);
 	console.log('### mouseY:: =', mouseY);
 
-	// 	// Get the size of the outer grid e.g. 15x15
-	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
-	// 	const coords = getGridCell(
-	// 		mouseX,
-	// 		mouseY,
-	// 		gridSize, // i.e. columns
-	// 		gridSize, // i.e. rows
-	// 		_sqSize,
-	// 		_gridStartPositions
-	// 	);
-	// 	console.log('### coords:: =', coords);
+	// Get the size of the outer grid e.g. 15x15
+	// const gridSize = _gridSizes[_gridSizes.length - 1];
+	// const coords = getGridCell(
+	// 	mouseX,
+	// 	mouseY,
+	// 	gridSize, // i.e. columns
+	// 	gridSize, // i.e. rows
+	// 	_sqSize,
+	// 	_gridStartPositions
+	// );
 
-	// 	// if we're clicking within grid
-	// 	if (coords) {
+	// const coords = getRadialCell(mouseX, mouseY);
+	// console.log('### coords:: =', coords);
+
+	// // if we're clicking within grid
+	// if (coords) {
 	_checkForCollision = true;
-	// 	}
+	// }
 }
 
 function mouseReleased() {
@@ -451,4 +470,33 @@ function getGridCell(
 		return { col, row, cellX, cellY };
 	}
 	return null;
+}
+
+function getRadialCell(mx, my) {
+	for (let i = 0; i < _cells.length; i++) {
+		const c = _cells[i];
+
+		if (hitRotatedSquare(mx, my, c.x, c.y, _sqSize, c.theta)) {
+			return { x: c.x, y: c.y, cell: c };
+		}
+	}
+
+	return null;
+}
+
+function hitRotatedSquare(px, py, cx, cy, size, angle) {
+	// Translate to cell-local coordinates
+	let dx = px - cx;
+	let dy = py - cy;
+
+	// Inverse rotate point
+	let cosA = Math.cos(-angle);
+	let sinA = Math.sin(-angle);
+
+	let rx = dx * cosA - dy * sinA;
+	let ry = dx * sinA + dy * cosA;
+
+	let h = size / 2;
+
+	return rx >= -h && rx <= h && ry >= -h && ry <= h;
 }
