@@ -20,12 +20,11 @@ const _maxGridSize = 15; // 15
 
 const _gridSizes = [];
 const _gridStartPositions = [];
-const _gridSquaresCount = [];
+const _gridSquaresCount = []; // currently don't need this
 const _cells = [];
-const _cellsByGridSize = [];
+const _cellsByGridSize = []; // currently don't need this
 
 let _checkForCollision = false;
-let _gotoTarget = true;
 
 // We multiply the particle's velocity by this value so we have an overall control of the speed
 const _speed = 1; // base value = 1
@@ -88,13 +87,10 @@ function setup() {
 		_gridSquaresCount.push(numSquaresCreated);
 	}
 
-	// console.log('### :: _gridSizes=', _gridSizes);
-	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
-	// console.log('### :: gridStartPositions=', _gridStartPositions);
-	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
-
-	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
-	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
+	console.log('### :: _gridSizes=', _gridSizes);
+	console.log('### :: _cellsByGridSize=', _cellsByGridSize);
+	console.log('### :: gridStartPositions=', _gridStartPositions);
+	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 }
 
 function draw() {
@@ -127,27 +123,28 @@ function draw() {
 
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawCell(pCell) {
-	if (_inAGeorgNeesStylee) {
-		stroke(pCell.outerStrokeColor);
-		square(pCell.x, pCell.y, _unit * 7);
+	// One batch extraction of props
+	const { x, y, outerStrokeColor, innerStrokeColor } = pCell;
 
-		stroke(pCell.innerStrokeColor);
-		square(pCell.x, pCell.y, _unit * 3);
+	if (_inAGeorgNeesStylee) {
+		stroke(outerStrokeColor);
+		square(x, y, _unit * 7);
+
+		stroke(innerStrokeColor);
+		square(x, y, _unit * 3);
 	} else {
 		stroke(_greenColor);
-		square(pCell.x, pCell.y, _sqSize);
+		square(x, y, _sqSize);
 	}
 }
 
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawRotatedCell(pCell) {
-	// one batch extraction of props
 	const { x, y, outerStrokeColor, innerStrokeColor, theta } = pCell;
 
 	push(); // save the current transform
 
 	translate(x, y); // move to cell centre
-	// translate(pCell.radialTargetX, pCell.radialTargetY);
 
 	rotate(theta); // rotate around that point
 
@@ -302,7 +299,8 @@ function createGridOutline(pColumns, pRows, pStartX, pStartY) {
 					x,
 					y,
 					pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
-					dist
+					dist,
+					sqCount
 				);
 				// Store the cell in a master array
 				_cells.push(cell);
@@ -319,10 +317,18 @@ function createGridOutline(pColumns, pRows, pStartX, pStartY) {
 }
 
 // This function only makes sense within this sketch - so can use globals
-const createCell = function (pX, pY, pColumns, pDist) {
+const createCell = function (
+	pGridTargetX,
+	pGridTargetY,
+	pColumns,
+	pDist,
+	pSqCount
+) {
 	const collisionPadding = 0;
 	const imageW = _sqSize + collisionPadding; // make border we use to detect collision slightly larger that actual square
 	const imageH = _sqSize + collisionPadding;
+
+	const gridSize = pColumns; // store in new var with more semantically meaningful name
 
 	// Now we know the maximum distance a square can be from the centre
 	// - generate a stroke colour based on that distance
@@ -346,24 +352,38 @@ const createCell = function (pX, pY, pColumns, pDist) {
 	}
 	// --
 
+	let circleRadius = gridSize * _sqSize * 0.55;
+
+	let index = _gridSizes.indexOf(gridSize);
+	let prevGridSize = index === 0 ? 1 : _gridSizes[index - 1];
+
+	// The number of squares in each grid outline can be calculated by considering the outer grid as a full grid
+	// and then subtracting the previous grid from it
+	let numSquares = sq(gridSize) - sq(prevGridSize);
+
+	// Now we know the number of squares in each grid outline, we can calculate their radial distances if we want to arrange them in a circle
+	let theta = (pSqCount * TWO_PI) / numSquares; // radial angle of the square
+	theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
+
+	const radialTargetX = _centerX + circleRadius * cos(theta);
+	const radialTargetY = _centerY + circleRadius * sin(theta);
+
 	const cellObj = {
 		width: imageW,
 		height: imageH,
 		radius: Math.sqrt(imageW * imageW + imageH * imageH) / 2,
-		// x: pX,
-		// y: pY,
 		x: Math.random() * (_canvasW - imageW), // - imageW keeps the initial position within the canvas
 		y: Math.random() * (_canvasH - imageH),
 		vx: Math.random() * 6 - 3,
 		vy: Math.random() * 6 - 3,
-		gridTargetX: pX,
-		gridTargetY: pY,
-		radialTargetX: null,
-		radialTargetY: null,
-		theta: null,
-		circleRadius: null,
-		targetX: pX,
-		targetY: pY,
+		gridTargetX: pGridTargetX,
+		gridTargetY: pGridTargetY,
+		radialTargetX,
+		radialTargetY,
+		theta,
+		circleRadius,
+		targetX: radialTargetX, // pGridTargetX gives interesting effect when combined with drawRotatedCell()
+		targetY: radialTargetY, // see above comment re. pGridTargetY
 		inCollision: false,
 		gridSize: pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
 		distFromCenter: pDist,
@@ -373,45 +393,6 @@ const createCell = function (pX, pY, pColumns, pDist) {
 
 	return cellObj;
 };
-
-// TODO - this function only makes sense within this sketch - so can use globals
-function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
-	// Loop through gridSizes array
-	// Use each value as an index to reference the cells stored in _cellsByGridSize
-	// The number in each cells array would be the value for numSquares
-	// Work out a set of suitable circle radii
-
-	for (let i = 0; i < pGridSizes.length; i++) {
-		let gridSize = pGridSizes[i];
-		const cellsArr = _cellsByGridSize[gridSize];
-
-		// let circleRadius = _unit * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
-		let circleRadius = gridSize * _sqSize * 0.55;
-
-		// const squareRadius = _sqSize * 0.5 * sqrt(2); // For ref: polygon circumradius formula
-
-		let numSquares = cellsArr.length;
-
-		for (var k = 0; k < numSquares; k++) {
-			let theta = (k * TWO_PI) / numSquares; // radial angle of the square
-			theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
-
-			const radialTargetX = _centerX + circleRadius * cos(theta);
-			const radialTargetY = _centerY + circleRadius * sin(theta);
-
-			let cell = cellsArr[k];
-			cell.radialTargetX = radialTargetX;
-			cell.radialTargetY = radialTargetY;
-			cell.theta = theta;
-			cell.circleRadius = circleRadius;
-
-			cell.targetX = radialTargetX;
-			cell.targetY = radialTargetY;
-
-			// drawRotatedCell(cell);
-		}
-	}
-}
 
 // This function could make sense outside this sketch & therefore should have
 // all the required values passed as arguments
