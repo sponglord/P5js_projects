@@ -141,18 +141,21 @@ function drawCell(pCell) {
 
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawRotatedCell(pCell) {
+	// one batch extraction of props
+	const { x, y, outerStrokeColor, innerStrokeColor, theta } = pCell;
+
 	push(); // save the current transform
 
-	translate(pCell.x, pCell.y); // move to cell centre
+	translate(x, y); // move to cell centre
 	// translate(pCell.radialTargetX, pCell.radialTargetY);
 
-	rotate(pCell.theta); // rotate around that point
+	rotate(theta); // rotate around that point
 
 	if (_inAGeorgNeesStylee) {
-		stroke(pCell.outerStrokeColor);
+		stroke(outerStrokeColor);
 		square(0, 0, _unit * 7); // since we've transformed to the square's centre, we can draw the square from there
 
-		stroke(pCell.innerStrokeColor);
+		stroke(innerStrokeColor);
 		square(0, 0, _unit * 3);
 	} else {
 		stroke(_greenColor);
@@ -169,7 +172,7 @@ const updatePositions = function () {
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
-		move(cell, i);
+		move(cell);
 	}
 };
 
@@ -215,32 +218,38 @@ const updatePositions = function () {
 // 	}
 // };
 
-const move = function (cell, index) {
+function move(pCell) {
+	// One batch extraction of props
+	let { x, y, vx, vy, targetX, targetY, inCollision } = pCell;
+
 	const easing = 0.08;
-	const bounce = -1;
 
-	if (_gotoTarget) {
-		// If image is not undergoing collision calculations - set it on it's way to it's target position
-		if (!cell.inCollision) {
-			const dx = cell.targetX - cell.x;
-			const dy = cell.targetY - cell.y;
+	// Skip target movement if in collision
+	if (!inCollision) {
+		const dx = targetX - x;
+		const dy = targetY - y;
 
-			// skip updating velocity entirely if the cell is already close
-			if (abs(dx) < 0.1 && abs(dy) < 0.1) {
-				cell.vx = 0;
-				cell.vy = 0;
-				return;
-			}
-
-			cell.vx = dx * easing;
-			cell.vy = dy * easing;
+		// Skip updating velocity entirely if the cell is already close to its target
+		if (abs(dx) < 0.1 && abs(dy) < 0.1) {
+			pCell.vx = 0;
+			pCell.vy = 0;
+			return;
 		}
+
+		vx = dx * easing;
+		vy = dy * easing;
 	}
 
-	// Change the img's position by its new velocity
-	cell.x += cell.vx * _speed;
-	cell.y += cell.vy * _speed;
-};
+	// Move (change the cell's position by its new velocity)
+	x += vx * _speed;
+	y += vy * _speed;
+
+	// Write back once - avoids many property writes
+	pCell.x = x;
+	pCell.y = y;
+	pCell.vx = vx;
+	pCell.vy = vy;
+}
 
 function mousePressed() {
 	console.log('### mouseX:: =', mouseX);
@@ -376,12 +385,10 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 		let gridSize = pGridSizes[i];
 		const cellsArr = _cellsByGridSize[gridSize];
 
-		let circleRadius = _unit * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
-		// let circleRadius = gridSize * _sqSize * 0.55;
+		// let circleRadius = _unit * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
+		let circleRadius = gridSize * _sqSize * 0.55;
 
-		// const squareRadius = _sqSize * 0.5 * sqrt(2);
-		// const padding = -3;
-		// let circleRadius = gridSize * (squareRadius + padding);
+		// const squareRadius = _sqSize * 0.5 * sqrt(2); // For ref: polygon circumradius formula
 
 		let numSquares = cellsArr.length;
 
