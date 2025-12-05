@@ -98,19 +98,20 @@ function setup() {
 	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
-	// setTimeout(() => {
-	// for (let i = 0; i < _gridSizes.length; i++) {
-	// 	let gridSize = _gridSizes[i];
-	// 	const cellsArr = _cellsByGridSize[gridSize];
-	// 	arrangeSquaresInCircle(
-	// 		cellsArr,
-	// 		_sqSize,
-	// 		_centerX,
-	// 		_centerY,
-	// 		gridSize * 10
-	// 	);
-	// }
-	// }, 3000);
+	setTimeout(() => {
+		for (let i = 0; i < _gridSizes.length; i++) {
+			let gridSize = _gridSizes[i];
+			const cellsArr = _cellsByGridSize[gridSize];
+			arrangeSquaresInCircle(
+				cellsArr,
+				_sqSize,
+				_centerX,
+				_centerY,
+				// gridSize * 10
+				gridSize * _sqSize * 0.55
+			);
+		}
+	}, 3000);
 
 	// Now we know the number of squares in each grid, we can calculate their radial distances if we want to arrange them in a circle
 	generateCellRadialDistances(_cells, _gridSizes, _gridSquaresCount);
@@ -463,18 +464,15 @@ const arrangeSquaresInCircle = function (
 		const targetX = pStartX + pCircleRadius * cos(theta);
 		const targetY = pStartY + pCircleRadius * sin(theta);
 
-		// setTimeout(() => {
-		console.log('\n### targetX:: =', targetX);
-		console.log('### targetY:: =', targetY);
+		setTimeout(() => {
+			push(); // save the current transform
+			translate(targetX, targetY); // move to cell centre
 
-		push(); // save the current transform
-		translate(targetX, targetY); // move to cell centre
+			rotate(theta); // rotate around that point
+			strokeWeight(1);
+			square(0, 0, pSqSize); // since we've transformed to the squares centre, we can draw the square from there
 
-		rotate(theta); // rotate around that point
-
-		square(0, 0, pSqSize); // since we've transformed to the squares centre, we can draw the square from there
-
-		pop(); // restore the original transform
-		// }, 100 * (i + 1));
+			pop(); // restore the original transform
+		}, 50 * (i + 1));
 	}
 };
