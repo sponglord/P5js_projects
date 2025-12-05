@@ -422,9 +422,8 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 		const cellsArr = _cellsByGridSize[gridSize];
 
 		// let circleRadius = 11 * gridSize;
-		let circleRadius = 2 * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
-
-		// console.log('### ::circleRadius =', circleRadius);
+		// let circleRadius = _unit * 5 * gridSize; // _unit * 5 (arbitrary, equals ±11)
+		let circleRadius = gridSize * _sqSize * 0.55;
 
 		let numSquares = cellsArr.length;
 
@@ -441,10 +440,9 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 			cell.theta = theta;
 			cell.circleRadius = circleRadius;
 
-			// setTimeout(() => {
-
-			drawRotatedCell(cell);
-			// }, 100 * (k + 1));
+			setTimeout(() => {
+				drawRotatedCell(cell);
+			}, 50 * (k + 1));
 		}
 	}
 }
