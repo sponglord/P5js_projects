@@ -107,6 +107,22 @@ function draw() {
 		// drawCell(cell);
 		drawRotatedCell(cell);
 	}
+
+	// 	// Get the size of the outer grid e.g. 15x15
+	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
+	// 	const coords = getGridCell(
+	// 		mouseX,
+	// 		mouseY,
+	// 		gridSize,
+	// 		gridSize,
+	// 		_sqSize,
+	// 		_gridStartPositions
+	// 	);
+
+	// 	if (coords) {
+	// 		stroke(_whiteColor);
+	// 		square(coords.cellX, coords.cellY, _sqSize);
+	// 	}
 }
 
 // Already uses p5 globals like stroke & square, so can use other globals
@@ -147,11 +163,57 @@ function drawRotatedCell(pCell) {
 }
 
 const updatePositions = function () {
+	// 	if (_checkForCollision) {
+	// 		checkForCollision(_cells);
+	// 	}
+
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		move(cell, i);
 	}
 };
+
+// This function could make sense outside this sketch & therefore should have
+// all the required values passed as arguments
+// const checkForCollision = function (pCellsArr) {
+// 	const spring = 0.05;
+
+// 	const numCells = pCellsArr.length;
+
+// 	for (let i = 0; i < numCells - 1; i++) {
+// 		const cell0 = pCellsArr[i];
+
+// 		cell0.inCollision = false;
+
+// 		for (let j = i + 1; j < numCells; j++) {
+// 			const cell1 = pCellsArr[j];
+
+// 			cell1.inCollision = false;
+
+// 			const dx = cell1.x - cell0.x;
+// 			const dy = cell1.y - cell0.y;
+// 			const dist = Math.sqrt(dx * dx + dy * dy);
+// 			const minDist = cell0.radius + cell1.radius;
+
+// 			if (dist <= minDist) {
+// 				// const angle = Math.atan2(dy, dx);
+// 				const tx = cell0.x + (dx / dist) * minDist;
+// 				const ty = cell0.y + (dy / dist) * minDist;
+// 				const ax = (tx - cell1.x) * spring;
+// 				const ay = (ty - cell1.y) * spring;
+// 				cell0.vx -= ax * _speed;
+// 				cell0.vy -= ay * _speed;
+// 				cell1.vx += ax * _speed;
+// 				cell1.vy += ay * _speed;
+// 				//
+// 				cell0.inCollision = true;
+// 				cell1.inCollision = true;
+// 			} else {
+// 				cell1.inCollision = false;
+// 			}
+// 		}
+// 	}
+// };
 
 const move = function (cell, index) {
 	const easing = 0.08;
@@ -179,6 +241,37 @@ const move = function (cell, index) {
 	cell.x += cell.vx * _speed;
 	cell.y += cell.vy * _speed;
 };
+
+function mousePressed() {
+	console.log('### mouseX:: =', mouseX);
+	console.log('### mouseY:: =', mouseY);
+
+	// 	// Get the size of the outer grid e.g. 15x15
+	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
+	// 	const coords = getGridCell(
+	// 		mouseX,
+	// 		mouseY,
+	// 		gridSize, // i.e. columns
+	// 		gridSize, // i.e. rows
+	// 		_sqSize,
+	// 		_gridStartPositions
+	// 	);
+	// 	console.log('### coords:: =', coords);
+
+	// 	// if we're clicking within grid
+	// 	if (coords) {
+	// 		_checkForCollision = true;
+	// 	}
+}
+
+// function mouseReleased() {
+// 	_checkForCollision = false;
+
+// 	for (let i = 0; i < _cells.length; i++) {
+// 		const cell = _cells[i];
+// 		cell.inCollision = false;
+// 	}
+// }
 
 // TODO - this function only makes sense within this sketch - so can use globals
 // Create a grid "outline" i.e. only draw the squares that represent the outer edge of the grid
@@ -311,4 +404,38 @@ function generateCellRadialDistances(pCells, pGridSizes, pGridSquaresCount) {
 			// drawRotatedCell(cell);
 		}
 	}
+}
+
+// This function could make sense outside this sketch & therefore should have
+// all the required values passed as arguments
+function getGridCell(
+	pMouseX,
+	pMouseY,
+	pColumns,
+	pRows,
+	pSqSize,
+	pGridStartPositions
+) {
+	const firstCell = pGridStartPositions[pGridStartPositions.length - 1]; // i.e. cell at 0,0 postition (top left)
+
+	const startX = firstCell[0];
+	const startY = firstCell[1];
+
+	// const col = floor(pMouseX / pSqSize); // is the regular way
+	// But, we need to take into account where we've started drawing the squares from (startX, startY)
+	// and the fact that we're drawing the squares from the centre, not the top left (pSize / 2)
+	const adjustedMouseX = pMouseX - startX + pSqSize / 2;
+	const adjustedMouseY = pMouseY - startY + pSqSize / 2;
+
+	const col = floor(adjustedMouseX / pSqSize);
+	const row = floor(adjustedMouseY / pSqSize);
+
+	const cellX = startX + col * pSqSize;
+	const cellY = startY + row * pSqSize;
+
+	// Only return coords if we're within the grid
+	if (col >= 0 && col < pColumns && row >= 0 && row < pRows) {
+		return { col, row, cellX, cellY };
+	}
+	return null;
 }
