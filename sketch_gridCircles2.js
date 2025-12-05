@@ -125,7 +125,7 @@ function draw() {
 		// if we're within grid
 		if (coords) {
 			stroke(_whiteColor);
-			square(coords.cellX, coords.cellY, _sqSize);
+			square(coords.x, coords.y, _sqSize);
 		}
 	} else {
 		const hit = getRadialCell(mouseX, mouseY);
@@ -294,24 +294,27 @@ function mousePressed() {
 	console.log('### mouseX:: =', mouseX);
 	console.log('### mouseY:: =', mouseY);
 
-	// Get the size of the outer grid e.g. 15x15
-	// const gridSize = _gridSizes[_gridSizes.length - 1];
-	// const coords = getGridCell(
-	// 	mouseX,
-	// 	mouseY,
-	// 	gridSize, // i.e. columns
-	// 	gridSize, // i.e. rows
-	// 	_sqSize,
-	// 	_gridStartPositions
-	// );
+	let coords;
 
-	// const coords = getRadialCell(mouseX, mouseY);
-	// console.log('### coords:: =', coords);
+	if (!_isRadialGrid) {
+		// Get the size of the outer grid e.g. 15x15
+		const gridSize = _gridSizes[_gridSizes.length - 1];
+		coords = getGridCell(
+			mouseX,
+			mouseY,
+			gridSize,
+			gridSize,
+			_sqSize,
+			_gridStartPositions
+		);
+	} else {
+		coords = getRadialCell(mouseX, mouseY);
+	}
 
-	// // if we're clicking within grid
-	// if (coords) {
-	_checkForCollision = true;
-	// }
+	// If we're clicking within either type of grid
+	if (coords) {
+		_checkForCollision = true;
+	}
 }
 
 function mouseReleased() {
@@ -426,8 +429,8 @@ const createCell = function (
 		radialTargetY,
 		theta,
 		circleRadius,
-		targetX: radialTargetX, // pGridTargetX gives interesting effect when combined with drawRotatedCell()
-		targetY: radialTargetY, // see above comment re. pGridTargetY
+		targetX: _isRadialGrid ? radialTargetX : pGridTargetX, // NOTE: pGridTargetX & pGridTargetY also gives interesting effect...
+		targetY: _isRadialGrid ? radialTargetY : pGridTargetY, // ...when _isRadialGrid = true
 		inCollision: false,
 		gridSize: pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
 		distFromCenter: pDist,
@@ -467,7 +470,7 @@ function getGridCell(
 
 	// Only return coords if we're within the grid
 	if (col >= 0 && col < pColumns && row >= 0 && row < pRows) {
-		return { col, row, cellX, cellY };
+		return { col, row, x: cellX, y: cellY };
 	}
 	return null;
 }
