@@ -111,24 +111,6 @@ function draw() {
 	}
 
 	if (!_checkForCollision) {
-		// if (!_isRadialGrid) {
-		// 	// Get the size of the outer grid e.g. 15x15
-		// 	const gridSize = _gridSizes[_gridSizes.length - 1];
-		// 	const coords = getGridCell(
-		// 		mouseX,
-		// 		mouseY,
-		// 		gridSize,
-		// 		gridSize,
-		// 		_sqSize,
-		// 		_gridStartPositions
-		// 	);
-
-		// 	// if we're within grid
-		// 	if (coords) {
-		// 		stroke(_whiteColor);
-		// 		square(coords.x, coords.y, _sqSize);
-		// 	}
-		// } else {
 		const hit = getRadialCell(mouseX, mouseY, _cells, _sqSize);
 		if (hit) {
 			if (_isRadialGrid) {
@@ -138,7 +120,6 @@ function draw() {
 				square(hit.x, hit.y, _sqSize);
 			}
 		}
-		// }
 	}
 }
 
@@ -304,31 +285,7 @@ function mousePressed() {
 	console.log('### mouseX:: =', mouseX);
 	console.log('### mouseY:: =', mouseY);
 
-	// let coords;
-
-	// if (!_isRadialGrid) {
-	// 	// Get the size of the outer grid e.g. 15x15
-	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
-	// 	coords = getGridCell(
-	// 		mouseX,
-	// 		mouseY,
-	// 		gridSize,
-	// 		gridSize,
-	// 		_sqSize,
-	// 		_gridStartPositions
-	// 	);
-
-	// 	if (coords) {
-	// 		const matchingCell = findObjectByXY(_cells, {
-	// 			x: coords.x,
-	// 			y: coords.y,
-	// 		});
-	// 		console.log('### :: matchingCellv=', matchingCell);
-	// 	}
-	// } else {
 	const coords = getRadialCell(mouseX, mouseY, _cells, _sqSize);
-
-	// }
 
 	console.log('### coords:: =', coords);
 	// If we're clicking within either type of grid
@@ -461,58 +418,20 @@ const createCell = function (
 	return cellObj;
 };
 
-// This function could make sense outside this sketch & therefore should have
-// all the required values passed as arguments
-function getGridCell(
-	pMouseX,
-	pMouseY,
-	pColumns,
-	pRows,
-	pSqSize,
-	pGridStartPositions
-) {
-	const firstCell = pGridStartPositions[pGridStartPositions.length - 1]; // i.e. cell at 0,0 postition (top left)
+// function findObjectByXY(arr, target) {
+// 	const { x, y } = target;
+// 	console.log('### _cells:: =', _cells);
+// 	console.log('### x, y:: =', x, y);
 
-	const startX = firstCell[0];
-	const startY = firstCell[1];
+// 	for (let i = 0; i < arr.length; i++) {
+// 		const obj = arr[i];
+// 		if (obj.x === x && obj.y === y) {
+// 			return obj;
+// 		}
+// 	}
 
-	// const col = floor(pMouseX / pSqSize); // is the regular way
-	// But, we need to take into account where we've started drawing the squares from (startX, startY)
-	// and the fact that we're drawing the squares from the centre, not the top left (pSize / 2)
-	const adjustedMouseX = pMouseX - startX + pSqSize / 2;
-	const adjustedMouseY = pMouseY - startY + pSqSize / 2;
-
-	const col = floor(adjustedMouseX / pSqSize);
-	const row = floor(adjustedMouseY / pSqSize);
-
-	const cellX = startX + col * pSqSize;
-	const cellY = startY + row * pSqSize;
-
-	// Compute flat array index
-	const index = row * pSqSize + col;
-	const cell = _cells[index] ?? null;
-
-	// Only return coords if we're within the grid
-	if (col >= 0 && col < pColumns && row >= 0 && row < pRows) {
-		return { col, row, x: cellX, y: cellY };
-	}
-	return null;
-}
-
-function findObjectByXY(arr, target) {
-	const { x, y } = target;
-	console.log('### _cells:: =', _cells);
-	console.log('### x, y:: =', x, y);
-
-	for (let i = 0; i < arr.length; i++) {
-		const obj = arr[i];
-		if (obj.x === x && obj.y === y) {
-			return obj;
-		}
-	}
-
-	return null; // nothing found
-}
+// 	return null; // nothing found
+// }
 
 function getRadialCell(mx, my, pCells, pSqSize) {
 	for (let i = 0; i < pCells.length; i++) {
@@ -542,49 +461,3 @@ function hitRotatedSquare(px, py, cx, cy, size, angle) {
 
 	return rx >= -h && rx <= h && ry >= -h && ry <= h;
 }
-
-const gridObj = {
-	width: 20,
-	height: 20,
-	radius: 14.142135623730951,
-	x: 360,
-	y: 160,
-	vx: 0,
-	vy: 0,
-	gridTargetX: 360,
-	gridTargetY: 160,
-	radialTargetX: 500,
-	radialTargetY: 135,
-	theta: -1.5707963267948966,
-	circleRadius: 165,
-	targetX: 360,
-	targetY: 160,
-	inCollision: false,
-	gridSize: 15,
-	distFromCenter: 197.9898987322333,
-	outerStrokeColor: 'rgb(0, 74, 183)',
-	innerStrokeColor: 'rgb(0, 74, 183)',
-};
-
-const radialObj = {
-	width: 20,
-	height: 20,
-	radius: 14.142135623730951,
-	x: 500,
-	y: 135,
-	vx: 0,
-	vy: 0,
-	gridTargetX: 360,
-	gridTargetY: 160,
-	radialTargetX: 500,
-	radialTargetY: 135,
-	theta: -1.5707963267948966,
-	circleRadius: 165,
-	targetX: 500,
-	targetY: 135,
-	inCollision: false,
-	gridSize: 15,
-	distFromCenter: 197.9898987322333,
-	outerStrokeColor: 'rgb(0, 74, 183)',
-	innerStrokeColor: 'rgb(0, 74, 183)',
-};
