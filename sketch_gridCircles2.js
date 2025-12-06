@@ -406,6 +406,10 @@ const createCell = function (
 		radialTargetY,
 		theta,
 		circleRadius,
+		// Inverse rotation point: the point *opposite* the square’s rotation - since this never changes we can precompute it
+		// (means the hit test in getRadialCell > hitRotatedSquare can be optimised)
+		cosR: cos(-theta),
+		sinR: sin(-theta),
 		targetX: _isRadialGrid ? radialTargetX : pGridTargetX, // NOTE: pGridTargetX & pGridTargetY also gives interesting effect...
 		targetY: _isRadialGrid ? radialTargetY : pGridTargetY, // ...when _isRadialGrid = true
 		inCollision: false,
@@ -437,7 +441,10 @@ function getRadialCell(mx, my, pCells, pSqSize) {
 	for (let i = 0; i < pCells.length; i++) {
 		const c = pCells[i];
 
-		if (hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.theta)) {
+		if (
+			// hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.theta, c.cosR, c.sinR)
+			hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.cosR, c.sinR)
+		) {
 			return { x: c.x, y: c.y, cell: c };
 		}
 	}
@@ -445,17 +452,21 @@ function getRadialCell(mx, my, pCells, pSqSize) {
 	return null;
 }
 
-function hitRotatedSquare(px, py, cx, cy, size, angle) {
+// function hitRotatedSquare(px, py, cx, cy, size, angle, cosR, sinR) {
+function hitRotatedSquare(px, py, cx, cy, size, cosR, sinR) {
 	// Translate to cell-local coordinates
 	let dx = px - cx;
 	let dy = py - cy;
 
 	// Inverse rotate point
-	let cosA = Math.cos(-angle);
-	let sinA = Math.sin(-angle);
+	// let cosA = Math.cos(-angle);
+	// let sinA = Math.sin(-angle);
 
-	let rx = dx * cosA - dy * sinA;
-	let ry = dx * sinA + dy * cosA;
+	// let rx = dx * cosA - dy * sinA;
+	// let ry = dx * sinA + dy * cosA;
+
+	let rx = dx * cosR - dy * sinR;
+	let ry = dx * sinR + dy * cosR;
 
 	let h = size / 2;
 
