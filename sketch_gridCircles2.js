@@ -104,7 +104,7 @@ function draw() {
 		const cell = _cells[i];
 
 		if (!_isRadialGrid) {
-			drawCell(cell);
+			drawCell(cell); // NOTE: Also gives interesting effect to draw arotated square in the regular grid
 		} else {
 			drawRotatedCell(cell);
 		}
@@ -116,19 +116,21 @@ function draw() {
 			if (_isRadialGrid) {
 				drawRotatedCell(hit.cell, true);
 			} else {
-				stroke(_whiteColor);
-				square(hit.x, hit.y, _sqSize);
+				drawCell(hit.cell, true);
 			}
 		}
 	}
 }
 
 // Already uses p5 globals like stroke & square, so can use other globals
-function drawCell(pCell) {
+function drawCell(pCell, pIsWhite) {
 	// One batch extraction of props
 	const { x, y, outerStrokeColor, innerStrokeColor } = pCell;
 
-	if (_inAGeorgNeesStylee) {
+	if (pIsWhite) {
+		stroke(_whiteColor);
+		square(x, y, _sqSize);
+	} else if (_inAGeorgNeesStylee) {
 		stroke(outerStrokeColor);
 		square(x, y, _unit * 7);
 
@@ -406,12 +408,16 @@ const createCell = function (
 		radialTargetY,
 		theta,
 		circleRadius,
-		// Inverse rotation point: the point *opposite* the square’s rotation - since this never changes we can precompute it
-		// (means the hit test in getRadialCell > hitRotatedSquare can be optimised)
+		// Inverse rotation point: the point *opposite* the square’s rotation
+		// - since this never changes we can precompute it (means the hit test in getRadialCell > hitRotatedSquare can be optimised)
+		// Explanation:
+		// The square is rotated by `angle` (theta).
+		// To align it back to axis-aligned orientation (for the hit test), we rotate the point in the
+		// *opposite* direction (−theta).
 		cosR: cos(-theta),
 		sinR: sin(-theta),
-		targetX: _isRadialGrid ? radialTargetX : pGridTargetX, // NOTE: pGridTargetX & pGridTargetY also gives interesting effect...
-		targetY: _isRadialGrid ? radialTargetY : pGridTargetY, // ...when _isRadialGrid = true
+		targetX: _isRadialGrid ? radialTargetX : pGridTargetX,
+		targetY: _isRadialGrid ? radialTargetY : pGridTargetY,
 		inCollision: false,
 		gridSize: pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
 		distFromCenter: pDist,
@@ -437,38 +443,45 @@ const createCell = function (
 // 	return null; // nothing found
 // }
 
-function getRadialCell(mx, my, pCells, pSqSize) {
+function getRadialCell(pMouseX, pMouseY, pCells, pSqSize) {
 	for (let i = 0; i < pCells.length; i++) {
-		const c = pCells[i];
+		const cell = pCells[i];
+
+		const { x, y, cosR, sinR } = cell;
 
 		if (
 			// hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.theta, c.cosR, c.sinR)
-			hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.cosR, c.sinR)
+			hitRotatedSquare(pMouseX, pMouseY, x, y, pSqSize, cosR, sinR)
 		) {
-			return { x: c.x, y: c.y, cell: c };
+			return { x, y, cell };
 		}
 	}
 
 	return null;
 }
-
-// function hitRotatedSquare(px, py, cx, cy, size, angle, cosR, sinR) {
+/**
+ * Check whether a point (px, py) lies inside a rotated square whose centre is cx, cy
+ * @param {number} cosR - Inverse rotation of the square in radians
+ * @param {number} sinR - Inverse rotation of the square in radians
+ * @returns {boolean} True if the point lies inside the rotated square
+ */
 function hitRotatedSquare(px, py, cx, cy, size, cosR, sinR) {
-	// Translate to cell-local coordinates
+	// Translate point into cell coordinate system
 	let dx = px - cx;
 	let dy = py - cy;
 
 	// Inverse rotate point
-	// let cosA = Math.cos(-angle);
-	// let sinA = Math.sin(-angle);
-
-	// let rx = dx * cosA - dy * sinA;
-	// let ry = dx * sinA + dy * cosA;
-
+	// Rotate the point around (0,0) using its inverse rotation
 	let rx = dx * cosR - dy * sinR;
 	let ry = dx * sinR + dy * cosR;
 
+	// After unrotating, the square is now just a regular axis-aligned square
+	// centered at (0,0).
+	// So the boundaries are:
+	//    -size/2  <=  rx  <=  size/2
+	//    -size/2  <=  ry  <=  size/2
 	let h = size / 2;
 
+	// And we can do a simple axis-aligned boundary check
 	return rx >= -h && rx <= h && ry >= -h && ry <= h;
 }
