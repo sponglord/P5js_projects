@@ -79,7 +79,7 @@ function setup() {
 
 		const [gridStartX, gridStartY] = _gridStartPositions[i];
 
-		// Create grid outline
+		// Create grid outline (will go on to create individual cells, populating _cells array)
 		const numSquaresCreated = createGridOutline(
 			gridSize,
 			gridSize,
@@ -111,6 +111,10 @@ function draw() {
 	}
 
 	if (!_checkForCollision) {
+		// Using getRadialCell also works for regular grid because all cells are generated with
+		// rotation related properties - we just don't apply that rotation when we draw the regular grid.
+		// However the hit test algorithm always looks at the rotation properties and ignores, or rather inverses,
+		// them to make each square it checks a regular axis aligned square
 		const hit = getRadialCell(mouseX, mouseY, _cells, _sqSize);
 		if (hit) {
 			if (_isRadialGrid) {
