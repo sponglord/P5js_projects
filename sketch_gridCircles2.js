@@ -31,6 +31,38 @@ let _isRadialGrid = false;
 // We multiply the particle's velocity by this value so we have an overall control of the speed
 const _speed = 1; // base value = 1
 
+// Map to hold the buckets of cells
+const grid = new Map();
+
+// Bucket size
+// 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
+// 40 is like 2o but more so, it gives it a real pulse as you click and let go
+const _bucketSize = 12;
+
+// convert grid coords to a unique key
+function hash(x, y) {
+	return `${x},${y}`;
+}
+
+function buildGrid(cells) {
+	grid.clear(); // reset all buckets for this frame
+
+	for (const c of cells) {
+		// 1. Determine which grid square (bucket) this cell belongs in
+		const gx = Math.floor(c.x / _bucketSize);
+		const gy = Math.floor(c.y / _bucketSize);
+
+		// 2. Create a unique string key for that bucket
+		const key = hash(gx, gy);
+
+		// 3. If the bucket doesn't exist yet, create it
+		if (!grid.has(key)) grid.set(key, []);
+
+		// 4. Put the cell into the correct bucket
+		grid.get(key).push(c);
+	}
+}
+
 function setup() {
 	createCanvas(_canvasW, _canvasH);
 	background(_backgroundColor);
@@ -186,70 +218,126 @@ const updatePositions = function () {
 
 // This function could make sense outside this sketch & therefore should have
 // all the required values passed as arguments
-const checkForCollision = function (pCellsArr) {
+// const checkForCollision = function (pCellsArr) {
+// 	const spring = 0.05;
+
+// 	const numCells = pCellsArr.length;
+
+// 	for (let i = 0; i < numCells - 1; i++) {
+// 		const cell0 = pCellsArr[i];
+
+// 		let {
+// 			x: x0,
+// 			y: y0,
+// 			radius: radius0,
+// 			vx: vx0,
+// 			vy: vy0,
+// 			inCollision: inCollision0,
+// 		} = cell0;
+
+// 		cell0.inCollision = false;
+
+// 		for (let j = i + 1; j < numCells; j++) {
+// 			const cell1 = pCellsArr[j];
+
+// 			let {
+// 				x: x1,
+// 				y: y1,
+// 				radius: radius1,
+// 				vx: vx1,
+// 				vy: vy1,
+// 				inCollision: inCollision1,
+// 			} = cell1;
+
+// 			cell1.inCollision = false;
+
+// 			const dx = x1 - x0;
+// 			const dy = y1 - y0;
+// 			const dist = Math.sqrt(dx * dx + dy * dy);
+// 			const minDist = radius0 + radius1;
+
+// 			if (dist <= minDist) {
+// 				// const angle = Math.atan2(dy, dx);
+// 				const tx = x0 + (dx / dist) * minDist;
+// 				const ty = y0 + (dy / dist) * minDist;
+// 				const ax = (tx - cell1.x) * spring;
+// 				const ay = (ty - cell1.y) * spring;
+// 				vx0 -= ax * _speed;
+// 				vy0 -= ay * _speed;
+// 				vx1 += ax * _speed;
+// 				vy1 += ay * _speed;
+// 				//
+// 				inCollision0 = true;
+// 				inCollision1 = true;
+// 				// write properties back
+// 				cell0.vx = vx0;
+// 				cell0.vy = vy0;
+// 				cell0.inCollision = inCollision0;
+// 				cell1.vx = vx1;
+// 				cell1.vy = vy1;
+// 				cell1.inCollision = inCollision1;
+// 			} else {
+// 				cell1.inCollision = false;
+// 			}
+// 		}
+// 	}
+// };
+
+/**
+ * Uniform Spatial Hash Grid collision detection
+ * Assign each cell to a grid bucket (hash key) based on its position
+ * Only check collisions between cells in:
+ * - the same bucket
+ * - the 8 neighbouring buckets
+ */
+function checkForCollision(cells) {
+	buildGrid(cells);
+
 	const spring = 0.05;
 
-	const numCells = pCellsArr.length;
+	for (const c0 of cells) {
+		c0.inCollision = false;
 
-	for (let i = 0; i < numCells - 1; i++) {
-		const cell0 = pCellsArr[i];
+		const gx = Math.floor(c0.x / _bucketSize);
+		const gy = Math.floor(c0.y / _bucketSize);
 
-		let {
-			x: x0,
-			y: y0,
-			radius: radius0,
-			vx: vx0,
-			vy: vy0,
-			inCollision: inCollision0,
-		} = cell0;
+		// Check same + 8 surrounding buckets:
+		// i.e same bucket plus one to left and one to right on x-axis
+		// & same bucket plus one above and one below on y-axis
+		for (let ox = -1; ox <= 1; ox++) {
+			for (let oy = -1; oy <= 1; oy++) {
+				const key = hash(gx + ox, gy + oy);
+				const bucket = grid.get(key);
+				if (!bucket) continue;
 
-		cell0.inCollision = false;
+				// Loop only the cells *in this bucket*
+				for (const c1 of bucket) {
+					if (c1 === c0) continue;
 
-		for (let j = i + 1; j < numCells; j++) {
-			const cell1 = pCellsArr[j];
+					// --- circle collision
+					const dx = c1.x - c0.x;
+					const dy = c1.y - c0.y;
+					const dist = Math.sqrt(dx * dx + dy * dy);
+					const minDist = c0.radius + c1.radius;
 
-			let {
-				x: x1,
-				y: y1,
-				radius: radius1,
-				vx: vx1,
-				vy: vy1,
-				inCollision: inCollision1,
-			} = cell1;
+					if (dist < minDist) {
+						const tx = c0.x + (dx / dist) * minDist;
+						const ty = c0.y + (dy / dist) * minDist;
+						const ax = (tx - c1.x) * spring;
+						const ay = (ty - c1.y) * spring;
 
-			cell1.inCollision = false;
+						c0.vx -= ax * _speed;
+						c0.vy -= ay * _speed;
+						c1.vx += ax * _speed;
+						c1.vy += ay * _speed;
 
-			const dx = x1 - x0;
-			const dy = y1 - y0;
-			const dist = Math.sqrt(dx * dx + dy * dy);
-			const minDist = radius0 + radius1;
-
-			if (dist <= minDist) {
-				// const angle = Math.atan2(dy, dx);
-				const tx = x0 + (dx / dist) * minDist;
-				const ty = y0 + (dy / dist) * minDist;
-				const ax = (tx - cell1.x) * spring;
-				const ay = (ty - cell1.y) * spring;
-				vx0 -= ax * _speed;
-				vy0 -= ay * _speed;
-				vx1 += ax * _speed;
-				vy1 += ay * _speed;
-				//
-				inCollision0 = true;
-				inCollision1 = true;
-				// write properties back
-				cell0.vx = vx0;
-				cell0.vy = vy0;
-				cell0.inCollision = inCollision0;
-				cell1.vx = vx1;
-				cell1.vy = vy1;
-				cell1.inCollision = inCollision1;
-			} else {
-				cell1.inCollision = false;
+						c0.inCollision = c1.inCollision = true;
+					}
+				}
 			}
 		}
 	}
-};
+}
 
 function move(pCell) {
 	// One batch extraction of props
@@ -428,6 +516,7 @@ const createCell = function (
 		outerStrokeColor,
 		innerStrokeColor,
 	};
+	console.log('### :: cellObj.radius=', cellObj.radius);
 
 	return cellObj;
 };
