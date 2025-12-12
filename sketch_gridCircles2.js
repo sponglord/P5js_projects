@@ -365,7 +365,7 @@ function mouseReleased() {
 		cell.randomYPos = y;
 	}
 
-	buildGridOnRandomPos(_cells, 80);
+	buildGridOnRandomPos(_cells, 80); // rebuild bucket
 }
 
 // TODO - this function only makes sense within this sketch - so can use globals
