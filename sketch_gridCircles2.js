@@ -37,7 +37,7 @@ const grid = new Map();
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
-const _bucketSize = 12;
+const _bucketSize = 40;
 
 // Convert grid coords to a unique key
 function hash(x, y) {
@@ -55,6 +55,25 @@ function buildGrid(cells) {
 		// 1. Determine which grid square (bucket) this cell belongs in
 		const gx = Math.floor(c.x / _bucketSize);
 		const gy = Math.floor(c.y / _bucketSize);
+
+		// 2. Create a unique string key for that bucket
+		const key = hash(gx, gy);
+
+		// 3. If the bucket doesn't exist yet, create it
+		if (!grid.has(key)) grid.set(key, []);
+
+		// 4. Put the cell into the correct bucket
+		grid.get(key).push(c);
+	}
+}
+
+function buildGridOnRandomPos(pCells, pBucketSize) {
+	grid.clear(); // reset all buckets for this frame
+
+	for (const c of pCells) {
+		// 1. Determine which grid square (bucket) this cell belongs in
+		const gx = Math.floor(c.randomXPos / pBucketSize);
+		const gy = Math.floor(c.randomYPos / pBucketSize);
 
 		// 2. Create a unique string key for that bucket
 		const key = hash(gx, gy);
@@ -428,8 +447,7 @@ const createCell = function (
 	const radialTargetX = _centerX + circleRadius * cos(theta);
 	const radialTargetY = _centerY + circleRadius * sin(theta);
 
-	const randomXPos = Math.random() * (_canvasW - imageW); // -imageW keeps the initial position within the canvas
-	const randomYPos = Math.random() * (_canvasH - imageH);
+	const { x: randomXPos, y: randomYPos } = getRandomPositions(imageW, imageH);
 
 	const cellObj = {
 		width: imageW,
@@ -524,4 +542,12 @@ function hitRotatedSquare(px, py, cx, cy, size, cosR, sinR) {
 
 	// And we can do a simple axis-aligned boundary check
 	return rx >= -h && rx <= h && ry >= -h && ry <= h;
+}
+
+function getRandomPositions(pImageW, pImageH) {
+	// -imageW & -imageH keeps the initial position within the canvas
+	return {
+		x: Math.random() * (_canvasW - pImageW),
+		y: Math.random() * (_canvasH - pImageH),
+	};
 }
