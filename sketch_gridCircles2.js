@@ -86,8 +86,6 @@ function buildGridOnRandomPos(pCells, pBucketSize) {
 		// 4. Put the cell into the correct bucket
 		grid.get(key).push(c);
 	}
-
-	console.log('### grid:: =', grid);
 }
 
 function setup() {
