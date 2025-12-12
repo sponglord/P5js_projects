@@ -428,14 +428,19 @@ const createCell = function (
 	const radialTargetX = _centerX + circleRadius * cos(theta);
 	const radialTargetY = _centerY + circleRadius * sin(theta);
 
+	const randomXPos = Math.random() * (_canvasW - imageW); // -imageW keeps the initial position within the canvas
+	const randomYPos = Math.random() * (_canvasH - imageH);
+
 	const cellObj = {
 		width: imageW,
 		height: imageH,
 		radius: Math.sqrt(imageW * imageW + imageH * imageH) / 2,
-		x: Math.random() * (_canvasW - imageW), // - imageW keeps the initial position within the canvas
-		y: Math.random() * (_canvasH - imageH),
+		x: randomXPos,
+		y: randomYPos,
 		vx: Math.random() * 6 - 3,
 		vy: Math.random() * 6 - 3,
+		randomXPos,
+		randomYPos,
 		gridTargetX: pGridTargetX,
 		gridTargetY: pGridTargetY,
 		radialTargetX,
