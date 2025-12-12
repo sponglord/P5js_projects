@@ -36,14 +36,18 @@ const grid = new Map();
 
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
-// 40 is like 2o but more so, it gives it a real pulse as you click and let go
+// 40 is like 20 but more so, it gives it a real pulse as you click and let go
 const _bucketSize = 12;
 
-// convert grid coords to a unique key
+// Convert grid coords to a unique key
 function hash(x, y) {
 	return `${x},${y}`;
 }
 
+// Subdivide the grid into an arbitrary set of buckets (based on _bucketSize)
+// Then group cells into these buckets based on their x,y positions
+//
+// Every cell ends up in the bucket corresponding to the _bucketSize x _bucketSize region it sits inside.
 function buildGrid(cells) {
 	grid.clear(); // reset all buckets for this frame
 
@@ -125,6 +129,8 @@ function setup() {
 	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
+
+	// buildGrid(_cells);
 }
 
 function draw() {
@@ -216,82 +222,17 @@ const updatePositions = function () {
 	}
 };
 
-// This function could make sense outside this sketch & therefore should have
-// all the required values passed as arguments
-// const checkForCollision = function (pCellsArr) {
-// 	const spring = 0.05;
-
-// 	const numCells = pCellsArr.length;
-
-// 	for (let i = 0; i < numCells - 1; i++) {
-// 		const cell0 = pCellsArr[i];
-
-// 		let {
-// 			x: x0,
-// 			y: y0,
-// 			radius: radius0,
-// 			vx: vx0,
-// 			vy: vy0,
-// 			inCollision: inCollision0,
-// 		} = cell0;
-
-// 		cell0.inCollision = false;
-
-// 		for (let j = i + 1; j < numCells; j++) {
-// 			const cell1 = pCellsArr[j];
-
-// 			let {
-// 				x: x1,
-// 				y: y1,
-// 				radius: radius1,
-// 				vx: vx1,
-// 				vy: vy1,
-// 				inCollision: inCollision1,
-// 			} = cell1;
-
-// 			cell1.inCollision = false;
-
-// 			const dx = x1 - x0;
-// 			const dy = y1 - y0;
-// 			const dist = Math.sqrt(dx * dx + dy * dy);
-// 			const minDist = radius0 + radius1;
-
-// 			if (dist <= minDist) {
-// 				// const angle = Math.atan2(dy, dx);
-// 				const tx = x0 + (dx / dist) * minDist;
-// 				const ty = y0 + (dy / dist) * minDist;
-// 				const ax = (tx - cell1.x) * spring;
-// 				const ay = (ty - cell1.y) * spring;
-// 				vx0 -= ax * _speed;
-// 				vy0 -= ay * _speed;
-// 				vx1 += ax * _speed;
-// 				vy1 += ay * _speed;
-// 				//
-// 				inCollision0 = true;
-// 				inCollision1 = true;
-// 				// write properties back
-// 				cell0.vx = vx0;
-// 				cell0.vy = vy0;
-// 				cell0.inCollision = inCollision0;
-// 				cell1.vx = vx1;
-// 				cell1.vy = vy1;
-// 				cell1.inCollision = inCollision1;
-// 			} else {
-// 				cell1.inCollision = false;
-// 			}
-// 		}
-// 	}
-// };
-
 /**
- * Uniform Spatial Hash Grid collision detection
- * Assign each cell to a grid bucket (hash key) based on its position
- * Only check collisions between cells in:
- * - the same bucket
- * - the 8 neighbouring buckets
+ * Uniform Spatial Hash Grid collision detection aka Spatial Partitioning
+ * Assign each cell to a grid bucket based on its position
+ * Instead of checking every cell against every other cell on each frame
+ * just check each cell against its 8 immediate neighbours
+ * (or a bucket against the 8 neighbouring buckets)
+ *
+ * Reduces total checks from O(n²) to O(n) average.
  */
 function checkForCollision(cells) {
-	buildGrid(cells);
+	buildGrid(cells); // Rebuild buckets as cells are in motion, to determine the new neighbouring cells
 
 	const spring = 0.05;
 
@@ -301,7 +242,7 @@ function checkForCollision(cells) {
 		const gx = Math.floor(c0.x / _bucketSize);
 		const gy = Math.floor(c0.y / _bucketSize);
 
-		// Check same + 8 surrounding buckets:
+		// Check same bucket + 8 surrounding buckets:
 		// i.e same bucket plus one to left and one to right on x-axis
 		// & same bucket plus one above and one below on y-axis
 		for (let ox = -1; ox <= 1; ox++) {
@@ -382,6 +323,7 @@ function mousePressed() {
 	const coords = getRadialCell(mouseX, mouseY, _cells, _sqSize);
 
 	console.log('### coords:: =', coords);
+
 	// If we're clicking within either type of grid
 	if (coords) {
 		_checkForCollision = true;
