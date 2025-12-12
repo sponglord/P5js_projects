@@ -189,6 +189,8 @@ function mousePressed() {
 
 // This function could make sense outside this sketch & therefore should have
 // all the required values passed as arguments
+//
+// This version of collision detection is O(n²) because it checks every cell against every other cell.
 // const checkForCollision = function (pCellsArr) {
 // 	const spring = 0.05;
 
@@ -197,31 +199,56 @@ function mousePressed() {
 // 	for (let i = 0; i < numCells - 1; i++) {
 // 		const cell0 = pCellsArr[i];
 
+// 		let {
+// 			x: x0,
+// 			y: y0,
+// 			radius: radius0,
+// 			vx: vx0,
+// 			vy: vy0,
+// 			inCollision: inCollision0,
+// 		} = cell0;
+
 // 		cell0.inCollision = false;
 
 // 		for (let j = i + 1; j < numCells; j++) {
 // 			const cell1 = pCellsArr[j];
 
+// 			let {
+// 				x: x1,
+// 				y: y1,
+// 				radius: radius1,
+// 				vx: vx1,
+// 				vy: vy1,
+// 				inCollision: inCollision1,
+// 			} = cell1;
+
 // 			cell1.inCollision = false;
 
-// 			const dx = cell1.x - cell0.x;
-// 			const dy = cell1.y - cell0.y;
+// 			const dx = x1 - x0;
+// 			const dy = y1 - y0;
 // 			const dist = Math.sqrt(dx * dx + dy * dy);
-// 			const minDist = cell0.radius + cell1.radius;
+// 			const minDist = radius0 + radius1;
 
 // 			if (dist <= minDist) {
 // 				// const angle = Math.atan2(dy, dx);
-// 				const tx = cell0.x + (dx / dist) * minDist;
-// 				const ty = cell0.y + (dy / dist) * minDist;
+// 				const tx = x0 + (dx / dist) * minDist;
+// 				const ty = y0 + (dy / dist) * minDist;
 // 				const ax = (tx - cell1.x) * spring;
 // 				const ay = (ty - cell1.y) * spring;
-// 				cell0.vx -= ax * _speed;
-// 				cell0.vy -= ay * _speed;
-// 				cell1.vx += ax * _speed;
-// 				cell1.vy += ay * _speed;
+// 				vx0 -= ax * _speed;
+// 				vy0 -= ay * _speed;
+// 				vx1 += ax * _speed;
+// 				vy1 += ay * _speed;
 // 				//
-// 				cell0.inCollision = true;
-// 				cell1.inCollision = true;
+// 				inCollision0 = true;
+// 				inCollision1 = true;
+// 				// write properties back
+// 				cell0.vx = vx0;
+// 				cell0.vy = vy0;
+// 				cell0.inCollision = inCollision0;
+// 				cell1.vx = vx1;
+// 				cell1.vy = vy1;
+// 				cell1.inCollision = inCollision1;
 // 			} else {
 // 				cell1.inCollision = false;
 // 			}
