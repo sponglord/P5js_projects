@@ -37,10 +37,11 @@ const grid = new Map();
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
-const _bucketSize = 12;
+let _bucketSize = 12;
 
-let _isStart = true;
-let _isPhase1 = (_isPhase2 = false);
+let _isPhase0 = true;
+let _isPhase1 = false;
+let _isPhase2 = false;
 
 function setup() {
 	createCanvas(_canvasW, _canvasH);
@@ -119,15 +120,21 @@ function draw() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 
-		if (!_isRadialGrid) {
-			drawCell(cell); // NOTE: Also gives interesting effect to draw ar otated square in the regular grid
-		} else {
+		if (getPhase() === 2) {
 			drawRotatedCell(cell);
+		} else {
+			drawCell(cell);
 		}
+
+		// if (!_isRadialGrid) {
+		// 	drawCell(cell); // NOTE: Also gives interesting effect to draw ar otated square in the regular grid
+		// } else {
+		// 	drawRotatedCell(cell);
+		// }
 	}
 
 	// At start draw white square in centre
-	if (_isStart) {
+	if (getPhase() === 0) {
 		drawCell({ x: _centerX, y: _centerY }, true);
 		return;
 	}
@@ -148,9 +155,9 @@ function draw() {
 		}
 	}
 
-	// If in phase1 (regular grid)
 	if (_checkForCollision) {
-		if (_isPhase1) {
+		// If in phase1 (regular grid)
+		if (getPhase() === 1) {
 			// monitor if "test" cell has moved a sufficient distance (a full square from where it was)
 			let h = _sqSize / 2;
 			let { x, y, targetX, targetY } = _cells[0];
@@ -159,8 +166,8 @@ function draw() {
 				(y <= targetY - _sqSize || y >= targetY + _sqSize)
 			) {
 				console.log('### HAS MOVED ENOUGH!!!!!');
-				_isPhase1 = false;
-				_isPhase2 = true;
+				setPhase(2);
+				_bucketSize = 40;
 			}
 		}
 	}
@@ -319,7 +326,8 @@ function move(pCell) {
 }
 
 function mousePressed() {
-	if (_isStart) {
+	// At start, check if central white square has been clicked
+	if (getPhase() === 0) {
 		let h = _sqSize / 2;
 		if (
 			mouseX >= _centerX - h &&
@@ -327,12 +335,12 @@ function mousePressed() {
 			mouseY >= _centerY - h &&
 			mouseY <= _centerY + h
 		) {
-			_isStart = false;
 			loop(); // start continuous draw loop
+
+			// if it has, move to next phase
+			setPhase(1);
 		}
 
-		// move to next phase
-		_isPhase1 = true;
 		return;
 	}
 
@@ -608,6 +616,27 @@ function buildGridOnRandomPos(pCells, pBucketSize) {
 	}
 }
 
-function getPhase() {}
+function getPhase() {
+	if (_isPhase0) {
+		return 0;
+	}
+	if (_isPhase1) {
+		return 1;
+	}
+	if (_isPhase2) {
+		return 2;
+	}
+}
 
-function setPhase(val) {}
+function setPhase(val) {
+	if (val === 1) {
+		_isPhase0 = false;
+		_isPhase1 = true;
+	}
+
+	if (val === 2) {
+		_isPhase0 = false;
+		_isPhase1 = false;
+		_isPhase2 = true;
+	}
+}
