@@ -37,7 +37,7 @@ const grid = new Map();
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
-const _bucketSize = 100;
+const _bucketSize = 40;
 
 // Convert grid coords to a unique key
 function hash(x, y) {
@@ -65,8 +65,6 @@ function buildGrid(cells) {
 		// 4. Put the cell into the correct bucket
 		grid.get(key).push(c);
 	}
-
-	console.log('### grid:: =', grid);
 }
 
 function buildGridOnRandomPos(pCells, pBucketSize) {
@@ -151,7 +149,7 @@ function setup() {
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
-	buildGrid(_cells);
+	// buildGrid(_cells);
 }
 
 function draw() {
@@ -253,7 +251,7 @@ const updatePositions = function () {
  * Reduces total checks from O(n²) to O(n) average.
  */
 function checkForCollision(cells) {
-	// buildGrid(cells); // Rebuild buckets as cells are in motion, to determine the new neighbouring cells
+	buildGrid(cells); // Rebuild buckets as cells are in motion, to determine the new neighbouring cells
 
 	const spring = 0.05;
 
@@ -358,12 +356,12 @@ function mouseReleased() {
 		const cell = _cells[i];
 		cell.inCollision = false;
 
-		const { x, y } = getRandomPositions(cell.width, cell.height);
-		cell.randomXPos = x;
-		cell.randomYPos = y;
+		// const { x, y } = getRandomPositions(cell.width, cell.height);
+		// cell.randomXPos = x;
+		// cell.randomYPos = y;
 	}
 
-	buildGridOnRandomPos(_cells, 80); // rebuild bucket
+	// buildGridOnRandomPos(_cells, 80); // rebuild bucket
 }
 
 // TODO - this function only makes sense within this sketch - so can use globals
@@ -489,7 +487,6 @@ const createCell = function (
 		outerStrokeColor,
 		innerStrokeColor,
 	};
-	console.log('### :: cellObj.radius=', cellObj.radius);
 
 	return cellObj;
 };
