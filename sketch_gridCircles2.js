@@ -148,6 +148,7 @@ function setup() {
 	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
+	// console.log('### :: _cells=', _cells);
 
 	// buildGrid(_cells);
 }
@@ -450,8 +451,8 @@ const createCell = function (
 	let theta = (pSqCount * TWO_PI) / numSquares; // radial angle of the square
 	theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
 
-	const radialTargetX = _centerX + circleRadius * cos(theta);
-	const radialTargetY = _centerY + circleRadius * sin(theta);
+	const radialTargetX = round(_centerX + circleRadius * cos(theta));
+	const radialTargetY = round(_centerY + circleRadius * sin(theta));
 
 	const { x: randomXPos, y: randomYPos } = getRandomPositions(imageW, imageH);
 
@@ -551,8 +552,11 @@ function hitRotatedSquare(px, py, cx, cy, size, cosR, sinR) {
 
 function getRandomPositions(pImageW, pImageH) {
 	// -imageW & -imageH keeps the initial position within the canvas
+	const ranX = Math.random() * (_canvasW - pImageW);
+	const ranY = Math.random() * (_canvasH - pImageH);
+
 	return {
-		x: Math.random() * (_canvasW - pImageW),
-		y: Math.random() * (_canvasH - pImageH),
+		x: round(ranX),
+		y: round(ranY),
 	};
 }
