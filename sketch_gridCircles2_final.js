@@ -85,7 +85,7 @@ function setup() {
 	const lastGridCell = _gridStartPositions[_gridStartPositions.length - 1];
 	const dx = lastGridCell[0] - _centerX;
 	const dy = lastGridCell[1] - _centerY;
-	_maxDistFromCenter = Math.sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
+	_maxDistFromCenter = sqrt(dx * dx + dy * dy) + _sqSize / 4; // add _sqSize / 4 to allow *some* chance of green on the outer squares
 
 	// Loop thru the grid sizes & start positions to create a series of grid outlines
 	for (let i = 0; i < _gridSizes.length; i++) {
@@ -107,7 +107,7 @@ function setup() {
 	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
-	console.log('### :: _cells=', _cells);
+	// console.log('### :: _cells=', _cells);
 
 	// buildGrid(_cells);
 
@@ -154,30 +154,20 @@ function draw() {
 	}
 
 	if (_checkForCollision) {
-		if (_phase === 2) {
-			// monitor if "test" cell has moved a sufficient distance (a full square from where it was)
-			let h = _sqSize / 4;
-			let { x, y, targetX, targetY } = _cells[0];
-			if (
-				(x <= targetX - _sqSize || x >= targetX + _sqSize) &&
-				(y <= targetY - _sqSize || y >= targetY + _sqSize)
-			) {
-				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
-				setPhase(3);
+		// If in phase1 (regular grid)
+		if (_phase === 1) {
+			// check if first cell has moved enough
+			if (checkForCellMotion(_cells[0])) {
+				console.log('### HAS MOVED ENOUGHx!!!!!');
+				setPhase(2);
 			}
 		}
 
-		// If in phase1 (regular grid)
-		if (_phase === 1) {
-			// monitor if "test" cell has moved a sufficient distance (a full square from where it was)
-			let h = _sqSize / 2;
-			let { x, y, targetX, targetY } = _cells[0];
-			if (
-				(x <= targetX - _sqSize || x >= targetX + _sqSize) &&
-				(y <= targetY - _sqSize || y >= targetY + _sqSize)
-			) {
-				console.log('### HAS MOVED ENOUGH!!!!!');
-				setPhase(2);
+		if (_phase === 2) {
+			// Slightly arbitrary choice of cell to monitor the motion of
+			if (checkForCellMotion(_cells[8])) {
+				console.log('### HAS MOVED ENOUGH AGAINx!!!!!');
+				setPhase(3);
 			}
 		}
 	}
@@ -458,25 +448,25 @@ const createCell = function (
 	let theta = (pSqCount * TWO_PI) / numSquares; // radial angle of the square
 	theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
 
-	const radialTargetX = _centerX + circleRadius * cos(theta);
-	const radialTargetY = _centerY + circleRadius * sin(theta);
+	const radialTargetX = round(_centerX + circleRadius * cos(theta));
+	const radialTargetY = round(_centerY + circleRadius * sin(theta));
 
 	const { x: randomXPos, y: randomYPos } = getRandomPositions(imageW, imageH);
 
 	const cellObj = {
 		width: imageW,
 		height: imageH,
-		radius: Math.sqrt(imageW * imageW + imageH * imageH) / 2,
+		radius: sqrt(imageW * imageW + imageH * imageH) / 2,
 		x: randomXPos,
 		y: randomYPos,
-		vx: Math.random() * 6 - 3,
-		vy: Math.random() * 6 - 3,
+		vx: random() * 6 - 3,
+		vy: random() * 6 - 3,
 		randomXPos,
 		randomYPos,
 		gridTargetX: pGridTargetX,
 		gridTargetY: pGridTargetY,
-		radialTargetX,
-		radialTargetY,
+		radialTargetX: round(radialTargetX),
+		radialTargetY: round(radialTargetY),
 		theta,
 		circleRadius,
 		// Inverse rotation point: the point *opposite* the square’s rotation
@@ -487,8 +477,8 @@ const createCell = function (
 		// *opposite* direction (−theta).
 		cosR: cos(-theta),
 		sinR: sin(-theta),
-		targetX: _isRadialGrid ? radialTargetX : pGridTargetX,
-		targetY: _isRadialGrid ? radialTargetY : pGridTargetY,
+		targetX: pGridTargetX,
+		targetY: pGridTargetY,
 		inCollision: false,
 		gridSize: pColumns, // use columns as an indicator of grid size (we're presuming a square grid)
 		distFromCenter: pDist,
@@ -560,12 +550,12 @@ function hitRotatedSquare(px, py, cx, cy, size, cosR, sinR) {
 function getRandomPositions(pImageW, pImageH) {
 	// -imageW & -imageH keeps the initial position within the canvas
 
-	const ranX = Math.random() * (_canvasW - pImageW);
-	const ranY = Math.random() * (_canvasH - pImageH);
+	const ranX = random() * (_canvasW - pImageW);
+	const ranY = random() * (_canvasH - pImageH);
 
 	return {
-		x: Math.round(ranX),
-		y: Math.round(ranY),
+		x: round(ranX),
+		y: round(ranY),
 	};
 }
 
@@ -585,25 +575,6 @@ function buildGrid(cells) {
 		// 1. Determine which grid square (bucket) this cell belongs in
 		const gx = Math.floor(c.x / _bucketSize);
 		const gy = Math.floor(c.y / _bucketSize);
-
-		// 2. Create a unique string key for that bucket
-		const key = hash(gx, gy);
-
-		// 3. If the bucket doesn't exist yet, create it
-		if (!grid.has(key)) grid.set(key, []);
-
-		// 4. Put the cell into the correct bucket
-		grid.get(key).push(c);
-	}
-}
-
-function buildGridOnRandomPos(pCells, pBucketSize) {
-	grid.clear(); // reset all buckets for this frame
-
-	for (const c of pCells) {
-		// 1. Determine which grid square (bucket) this cell belongs in
-		const gx = Math.floor(c.randomXPos / pBucketSize);
-		const gy = Math.floor(c.randomYPos / pBucketSize);
 
 		// 2. Create a unique string key for that bucket
 		const key = hash(gx, gy);
@@ -653,4 +624,17 @@ function resetCellInCollisionProp() {
 		const cell = _cells[i];
 		cell.inCollision = false;
 	}
+}
+
+// monitor if "test" cell has moved a sufficient distance (a half square  on the x & y from where it was)
+function checkForCellMotion(pCell) {
+	let h = _sqSize / 2;
+	let { x, y, targetX, targetY } = pCell;
+	if (
+		(x <= targetX - _sqSize || x >= targetX + _sqSize) &&
+		(y <= targetY - _sqSize || y >= targetY + _sqSize)
+	) {
+		return true;
+	}
+	return false;
 }
