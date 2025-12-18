@@ -39,9 +39,13 @@ const grid = new Map();
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
 let _bucketSize = 12;
 
-let _isPhase0 = true;
-let _isPhase1 = false;
-let _isPhase2 = false;
+/**
+ * Phase 0 = start: cells in random pos, waiting for click to send them to regular grid
+ * Phase 1 = regular grid, small bucket size (giving "fragmented" collision effect). Waiting for sufficient movement to send them to next phase
+ * Phase 2 = regular grid, cells drawn rotated, larger bucket size (giving "pulsing" effect). Waiting for sufficient movement to send them to next phase
+ * Phase 3 = radial grid
+ */
+let _phase = 0;
 
 function setup() {
 	createCanvas(_canvasW, _canvasH);
@@ -120,21 +124,15 @@ function draw() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 
-		if (getPhase() === 2) {
+		if (_phase >= 2) {
 			drawRotatedCell(cell);
 		} else {
 			drawCell(cell);
 		}
-
-		// if (!_isRadialGrid) {
-		// 	drawCell(cell); // NOTE: Also gives interesting effect to draw ar otated square in the regular grid
-		// } else {
-		// 	drawRotatedCell(cell);
-		// }
 	}
 
 	// At start draw white square in centre
-	if (getPhase() === 0) {
+	if (_phase === 0) {
 		drawCell({ x: _centerX, y: _centerY }, true);
 		return;
 	}
@@ -156,8 +154,21 @@ function draw() {
 	}
 
 	if (_checkForCollision) {
+		if (_phase === 2) {
+			// monitor if "test" cell has moved a sufficient distance (a full square from where it was)
+			let h = _sqSize / 4;
+			let { x, y, targetX, targetY } = _cells[0];
+			if (
+				(x <= targetX - _sqSize || x >= targetX + _sqSize) &&
+				(y <= targetY - _sqSize || y >= targetY + _sqSize)
+			) {
+				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
+				setPhase(3);
+			}
+		}
+
 		// If in phase1 (regular grid)
-		if (getPhase() === 1) {
+		if (_phase === 1) {
 			// monitor if "test" cell has moved a sufficient distance (a full square from where it was)
 			let h = _sqSize / 2;
 			let { x, y, targetX, targetY } = _cells[0];
@@ -167,7 +178,6 @@ function draw() {
 			) {
 				console.log('### HAS MOVED ENOUGH!!!!!');
 				setPhase(2);
-				_bucketSize = 40;
 			}
 		}
 	}
@@ -327,7 +337,7 @@ function move(pCell) {
 
 function mousePressed() {
 	// At start, check if central white square has been clicked
-	if (getPhase() === 0) {
+	if (_phase === 0) {
 		let h = _sqSize / 2;
 		if (
 			mouseX >= _centerX - h &&
@@ -344,12 +354,12 @@ function mousePressed() {
 		return;
 	}
 
-	console.log('### mouseX:: =', mouseX);
-	console.log('### mouseY:: =', mouseY);
+	// console.log('### mouseX:: =', mouseX);
+	// console.log('### mouseY:: =', mouseY);
 
 	const coords = getRadialCell(mouseX, mouseY, _cells, _sqSize);
 
-	console.log('### coords:: =', coords);
+	// console.log('### coords:: =', coords);
 
 	// If we're clicking within either type of grid
 	if (coords) {
@@ -359,17 +369,7 @@ function mousePressed() {
 
 function mouseReleased() {
 	_checkForCollision = false;
-
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
-		cell.inCollision = false;
-
-		// const { x, y } = getRandomPositions(cell.width, cell.height);
-		// cell.randomXPos = x;
-		// cell.randomYPos = y;
-	}
-
-	// buildGridOnRandomPos(_cells, 80); // rebuild bucket
+	resetCellInCollisionProp();
 }
 
 // TODO - this function only makes sense within this sketch - so can use globals
@@ -616,27 +616,41 @@ function buildGridOnRandomPos(pCells, pBucketSize) {
 	}
 }
 
-function getPhase() {
-	if (_isPhase0) {
-		return 0;
+/**
+ * Phase 0 = start: cells in random pos, waiting for click to send them to regular grid
+ * Phase 1 = regular grid, small bucket size (giving "fragmented" collision effect). Waiting for sufficient movement to send them to next phase
+ * Phase 2 = regular grid, cells drawn rotated, larger bucket size (giving "pulsing" effect). Waiting for sufficient movement to send them to next phase
+ * Phase 3 = radial grid
+ */
+function setPhase(val) {
+	_phase = val;
+
+	// On switch to regualr grid, but rotated cells - stop the collision detection so we can see the effect
+	if (_phase === 2) {
+		_checkForCollision = false;
+		resetCellInCollisionProp();
+		_bucketSize = 80;
 	}
-	if (_isPhase1) {
-		return 1;
-	}
-	if (_isPhase2) {
-		return 2;
+
+	if (_phase === 3) {
+		_bucketSize = 40;
+		_isRadialGrid = true;
+
+		_checkForCollision = false;
+		resetCellInCollisionProp();
+
+		// Change cell's target positions to the radial ones
+		for (let i = 0; i < _cells.length; i++) {
+			const cell = _cells[i];
+			cell.targetX = cell.radialTargetX;
+			cell.targetY = cell.radialTargetY;
+		}
 	}
 }
 
-function setPhase(val) {
-	if (val === 1) {
-		_isPhase0 = false;
-		_isPhase1 = true;
-	}
-
-	if (val === 2) {
-		_isPhase0 = false;
-		_isPhase1 = false;
-		_isPhase2 = true;
+function resetCellInCollisionProp() {
+	for (let i = 0; i < _cells.length; i++) {
+		const cell = _cells[i];
+		cell.inCollision = false;
 	}
 }
