@@ -1,4 +1,6 @@
-// ref: https://openprocessing.org/sketch/2798401#page-1
+/**
+ * My version, working along in the workshop
+ */
 
 var size = 30;
 

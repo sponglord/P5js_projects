@@ -1,3 +1,7 @@
+/**
+ * Original version from https://openprocessing.org/sketch/2798401#page-1
+ */
+
 var size = 20;
 var unit = size / 18;
 var columns = 44;

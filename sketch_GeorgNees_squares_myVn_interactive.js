@@ -1,4 +1,9 @@
-// ref: https://openprocessing.org/sketch/2798401#page-1
+/**
+ * Differs from the original in that as you move the mouse over the grid
+ * the square below turns white, whilst re-evaluating its chance of being green or blue,
+ * so sometimes it changes colour.
+ * Also quite a nice "trail" effect from the mouse movement
+ */
 
 var size = 20;
 
