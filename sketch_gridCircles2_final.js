@@ -43,7 +43,8 @@ let _bucketSize = 12;
  * Phase 0 = start: cells in random pos, waiting for click to send them to regular grid
  * Phase 1 = regular grid, small bucket size (giving "fragmented" collision effect). Waiting for sufficient movement to send them to next phase
  * Phase 2 = regular grid, cells drawn rotated, larger bucket size (giving "pulsing" effect). Waiting for sufficient movement to send them to next phase
- * Phase 3 = radial grid
+ * Phase 3 = radial grid. Waiting for sufficient movement to send them to next phase
+ * Phase 4 = radial grid, but enough motion will cause the cells to drift off (& snap back when the mouse is released)
  */
 let _phase = 0;
 
@@ -158,16 +159,27 @@ function draw() {
 		if (_phase === 1) {
 			// check if first cell has moved enough
 			if (checkForCellMotion(_cells[0])) {
-				console.log('### HAS MOVED ENOUGHx!!!!!');
+				console.log('### HAS MOVED ENOUGH!!!!!');
 				setPhase(2);
+				return;
 			}
 		}
 
 		if (_phase === 2) {
 			// Slightly arbitrary choice of cell to monitor the motion of
 			if (checkForCellMotion(_cells[8])) {
-				console.log('### HAS MOVED ENOUGH AGAINx!!!!!');
+				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3);
+				return;
+			}
+		}
+
+		if (_phase >= 3) {
+			// Slightly arbitrary choice of cell to monitor the motion of
+			if (checkForCellMotion(_cells[8])) {
+				console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
+				setPhase(4);
+				return;
 			}
 		}
 	}
@@ -592,6 +604,7 @@ function buildGrid(cells) {
  * Phase 1 = regular grid, small bucket size (giving "fragmented" collision effect). Waiting for sufficient movement to send them to next phase
  * Phase 2 = regular grid, cells drawn rotated, larger bucket size (giving "pulsing" effect). Waiting for sufficient movement to send them to next phase
  * Phase 3 = radial grid
+ * Phase 4 = radial grid, but enough motion will cause the cells to drift off (& snap back when the mouse is released)
  */
 function setPhase(val) {
 	_phase = val;
@@ -616,6 +629,10 @@ function setPhase(val) {
 			cell.targetX = cell.radialTargetX;
 			cell.targetY = cell.radialTargetY;
 		}
+	}
+
+	if (_phase === 4) {
+		_checkForCollision = false;
 	}
 }
 
