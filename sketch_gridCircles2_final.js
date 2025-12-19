@@ -594,8 +594,8 @@ function buildGrid(cells) {
  * Phase 4 = radial grid, but enough motion will cause the cells to drift off (& snap back when the mouse is released)
  */
 function setPhase(val) {
-	// delay setting phase to 1 to stop the drawing of the white square over the individual cells
-	// as they first move to the radila grid position
+	// Delay setting phase to 1 to stop the drawing of the white square over the individual cells
+	// as they first move to the regular grid position
 	if (_phase === 0) {
 		setTimeout(() => {
 			_phase = val;
