@@ -168,7 +168,7 @@ function draw() {
 		if (_phase === 2) {
 			if (checkForCellMotion(_cells[0])) {
 				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
-				setPhase(3);
+				setPhase(3); // send to radial grid
 				return;
 			}
 		}
@@ -604,14 +604,19 @@ function setPhase(val) {
 		_isRadialGrid = true;
 
 		_checkForCollision = false;
-		resetCellInCollisionProp();
 
-		// Change cell's target positions to the radial ones
-		for (let i = 0; i < _cells.length; i++) {
-			const cell = _cells[i];
-			cell.targetX = cell.radialTargetX;
-			cell.targetY = cell.radialTargetY;
-		}
+		// Using a timeout lets cells drift away before snapping to radial grid
+		// This eases the transition from the regular to radial grid (otherwise there's a bit of a weird "crossover")
+		setTimeout(() => {
+			resetCellInCollisionProp();
+
+			// Change cell's target positions to the radial ones
+			for (let i = 0; i < _cells.length; i++) {
+				const cell = _cells[i];
+				cell.targetX = cell.radialTargetX;
+				cell.targetY = cell.radialTargetY;
+			}
+		}, 1000);
 	}
 
 	if (_phase === 4) {
