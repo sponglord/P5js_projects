@@ -1,3 +1,9 @@
+/**
+ * Multiphased interaction relying on multiple user interaction
+ * to trigger collision behaviour and move it from
+ * randomly spaced cells, to a concentric grid formation to a radial grid formation
+ */
+
 const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';

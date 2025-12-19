@@ -1,3 +1,9 @@
+/**
+ * "Timelapsed" draw of radial grid
+ *
+ * Also contains standalone function to arrange squares in a circle
+ */
+
 const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
@@ -98,6 +104,7 @@ function setup() {
 	console.log('### :: gridStartPositions=', _gridStartPositions);
 	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
+	// Draws black outlines over the top
 	setTimeout(() => {
 		for (let i = 0; i < _gridSizes.length; i++) {
 			let gridSize = _gridSizes[i];

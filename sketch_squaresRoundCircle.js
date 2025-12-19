@@ -1,3 +1,7 @@
+/**
+ * Stepping stone. Has standalone function to arrange squares in a circle
+ */
+
 const _backgroundColor = 'rgb(0, 103, 189)';
 const _greenColor = 'rgb(12, 167, 17)';
 

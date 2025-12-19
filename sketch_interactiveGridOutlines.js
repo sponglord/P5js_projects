@@ -1,3 +1,8 @@
+/**
+ * Concentric grid (drawn in bands from the centre outwards)
+ * with collision interaction on mouseDown
+ */
+
 const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
