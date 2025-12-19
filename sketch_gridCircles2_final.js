@@ -28,6 +28,8 @@ let _checkForCollision = false;
 
 let _isRadialGrid = false;
 
+let _mouseHasBeenClicked = false;
+
 // We multiply the particle's velocity by this value so we have an overall control of the speed
 const _speed = 1; // base value = 1
 
@@ -131,13 +133,13 @@ function draw() {
 	}
 
 	// At start draw white square in centre
-	if (_phase === 0) {
+	if (_phase === 0 && !_mouseHasBeenClicked) {
 		drawCell({ x: _centerX, y: _centerY }, true);
 		return;
 	}
 
 	// Draw white square as mouse moves over grid
-	if (!_checkForCollision) {
+	if (!_checkForCollision && _phase >= 1) {
 		// Using getRadialCell also works for regular grid because all cells are generated with
 		// rotation related properties - we just don't apply that rotation when we draw the regular grid.
 		// However the hit test algorithm always looks at the rotation properties and ignores, or rather inverses,
@@ -159,7 +161,7 @@ function draw() {
 		if (_phase === 1) {
 			// check if first cell has moved enough
 			if (checkForCellMotion(_cells[0])) {
-				console.log('### HAS MOVED ENOUGH!!!!!');
+				// console.log('### HAS MOVED ENOUGH!!!!!');
 				setPhase(2);
 				return;
 			}
@@ -167,7 +169,7 @@ function draw() {
 
 		if (_phase === 2) {
 			if (checkForCellMotion(_cells[0])) {
-				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
+				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3); // send to radial grid
 				return;
 			}
@@ -175,7 +177,7 @@ function draw() {
 
 		if (_phase >= 3) {
 			if (checkForCellMotion(_cells[0])) {
-				console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
+				// console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
 				setPhase(4);
 				return;
 			}
@@ -349,6 +351,8 @@ function mousePressed() {
 
 			// if it has, move to next phase
 			setPhase(1);
+
+			_mouseHasBeenClicked = true; // Along with phase change, this will stop drawing white square in centre
 		}
 
 		return;
@@ -590,7 +594,15 @@ function buildGrid(cells) {
  * Phase 4 = radial grid, but enough motion will cause the cells to drift off (& snap back when the mouse is released)
  */
 function setPhase(val) {
-	_phase = val;
+	// delay setting phase to 1 to stop the drawing of the white square over the individual cells
+	// as they first move to the radila grid position
+	if (_phase === 0) {
+		setTimeout(() => {
+			_phase = val;
+		}, 1000);
+	} else {
+		_phase = val;
+	}
 
 	// On switch to regualr grid, but rotated cells - stop the collision detection so we can see the effect
 	if (_phase === 2) {
@@ -616,7 +628,7 @@ function setPhase(val) {
 				cell.targetX = cell.radialTargetX;
 				cell.targetY = cell.radialTargetY;
 			}
-		}, 1000);
+		}, 300);
 	}
 
 	if (_phase === 4) {
@@ -633,7 +645,7 @@ function resetCellInCollisionProp() {
 
 // monitor if "test" cell has moved a sufficient distance (a (half) square on the x & y from where it was)
 function checkForCellMotion(pCell) {
-	let moveDist = _sqSize; // / 2;
+	let moveDist = _sqSize / 2;
 	let { x, y, targetX, targetY } = pCell;
 
 	const xMin = targetX - moveDist;
