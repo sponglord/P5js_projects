@@ -110,8 +110,6 @@ function setup() {
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 	// console.log('### :: _cells=', _cells);
 
-	// buildGrid(_cells);
-
 	noLoop(); // only run draw code once
 }
 
@@ -146,7 +144,7 @@ function draw() {
 		// them to make each square it checks a regular axis aligned square
 		const hit = getRadialCell(mouseX, mouseY, _cells, _sqSize);
 		if (hit) {
-			if (_isRadialGrid) {
+			if (_phase >= 2) {
 				drawRotatedCell(hit.cell, true);
 			} else {
 				drawCell(hit.cell, true);
@@ -154,6 +152,8 @@ function draw() {
 		}
 	}
 
+	// Triggers for next phase... detect if cells are sufficiently in motion by picking first cell
+	// and seeing how far it has moved out of position
 	if (_checkForCollision) {
 		// If in phase1 (regular grid)
 		if (_phase === 1) {
@@ -166,8 +166,7 @@ function draw() {
 		}
 
 		if (_phase === 2) {
-			// Slightly arbitrary choice of cell to monitor the motion of
-			if (checkForCellMotion(_cells[8])) {
+			if (checkForCellMotion(_cells[0])) {
 				console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3);
 				return;
@@ -175,8 +174,7 @@ function draw() {
 		}
 
 		if (_phase >= 3) {
-			// Slightly arbitrary choice of cell to monitor the motion of
-			if (checkForCellMotion(_cells[8])) {
+			if (checkForCellMotion(_cells[0])) {
 				console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
 				setPhase(4);
 				return;
@@ -501,21 +499,6 @@ const createCell = function (
 	return cellObj;
 };
 
-// function findObjectByXY(arr, target) {
-// 	const { x, y } = target;
-// 	console.log('### _cells:: =', _cells);
-// 	console.log('### x, y:: =', x, y);
-
-// 	for (let i = 0; i < arr.length; i++) {
-// 		const obj = arr[i];
-// 		if (obj.x === x && obj.y === y) {
-// 			return obj;
-// 		}
-// 	}
-
-// 	return null; // nothing found
-// }
-
 function getRadialCell(pMouseX, pMouseY, pCells, pSqSize) {
 	for (let i = 0; i < pCells.length; i++) {
 		const cell = pCells[i];
@@ -643,14 +626,21 @@ function resetCellInCollisionProp() {
 	}
 }
 
-// monitor if "test" cell has moved a sufficient distance (a half square  on the x & y from where it was)
+// monitor if "test" cell has moved a sufficient distance (a (half) square on the x & y from where it was)
 function checkForCellMotion(pCell) {
-	let h = _sqSize / 2;
+	let moveDist = _sqSize; // / 2;
 	let { x, y, targetX, targetY } = pCell;
-	if (
-		(x <= targetX - _sqSize || x >= targetX + _sqSize) &&
-		(y <= targetY - _sqSize || y >= targetY + _sqSize)
-	) {
+
+	const xMin = targetX - moveDist;
+	const xMax = targetX + moveDist;
+	const yMin = targetY - moveDist;
+	const yMax = targetY + moveDist;
+
+	// console.log('\n### :: xMin, xMax=', xMin, xMax);
+	// console.log('### :: yMin, yMax=', yMin, yMax);
+	// console.log('### x,y:: =', round(x), round(y));
+
+	if ((x <= xMin || x >= xMax) && (y <= yMin || y >= yMax)) {
 		return true;
 	}
 	return false;
