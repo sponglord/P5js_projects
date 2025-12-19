@@ -1,3 +1,11 @@
+/**
+ * Concentric grid (drawn in bands from the centre outwards)
+ * with constantly reevaluated collision buckets on mouseDown
+ *
+ * Also contains all the code needed to create a radial grid with the same collision effects
+ *
+ * Acts as the penultimate step to sketch_gridCircles2.js
+ */
 const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
@@ -37,7 +45,7 @@ const grid = new Map();
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
-const _bucketSize = 40;
+const _bucketSize = 100;
 
 // Convert grid coords to a unique key
 function hash(x, y) {
@@ -150,7 +158,7 @@ function setup() {
 	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 	// console.log('### :: _cells=', _cells);
 
-	// buildGrid(_cells);
+	buildGrid(_cells);
 }
 
 function draw() {
@@ -252,7 +260,7 @@ const updatePositions = function () {
  * Reduces total checks from O(n²) to O(n) average.
  */
 function checkForCollision(cells) {
-	buildGrid(cells); // Rebuild buckets as cells are in motion, to determine the new neighbouring cells
+	// buildGrid(cells); // Rebuild buckets as cells are in motion, to determine the new neighbouring cells
 
 	const spring = 0.05;
 
@@ -357,12 +365,12 @@ function mouseReleased() {
 		const cell = _cells[i];
 		cell.inCollision = false;
 
-		// const { x, y } = getRandomPositions(cell.width, cell.height);
-		// cell.randomXPos = x;
-		// cell.randomYPos = y;
+		const { x, y } = getRandomPositions(cell.width, cell.height);
+		cell.randomXPos = x;
+		cell.randomYPos = y;
 	}
 
-	// buildGridOnRandomPos(_cells, 80); // rebuild bucket
+	buildGridOnRandomPos(_cells, _bucketSize); // rebuild bucket
 }
 
 // TODO - this function only makes sense within this sketch - so can use globals
