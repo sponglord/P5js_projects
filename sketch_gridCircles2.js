@@ -45,7 +45,7 @@ const grid = new Map();
 // Bucket size
 // 12 & the whole grid starts to shake || 20 and the motion starts from the outside layer
 // 40 is like 20 but more so, it gives it a real pulse as you click and let go
-const _bucketSize = 100;
+const _bucketSize = 50; // 100
 
 // Convert grid coords to a unique key
 function hash(x, y) {
@@ -194,6 +194,11 @@ function draw() {
 
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawCell(pCell, pIsWhite) {
+	if (pCell.inCollision) {
+		pCell.isElectrified = true;
+		pIsWhite = true;
+	}
+
 	// One batch extraction of props
 	const { x, y, outerStrokeColor, innerStrokeColor } = pCell;
 
@@ -368,6 +373,26 @@ function mouseReleased() {
 		const { x, y } = getRandomPositions(cell.width, cell.height);
 		cell.randomXPos = x;
 		cell.randomYPos = y;
+
+		// reset colour
+		if (cell.isElectrified) {
+			cell.isElectrified = false;
+			const chance = (cell.distFromCenter / _maxDistFromCenter) * 100;
+
+			var isOuterBlue = random(0, 100) < chance;
+			if (isOuterBlue) {
+				cell.outerStrokeColor = _blueColor;
+			} else {
+				cell.outerStrokeColor = _greenColor;
+			}
+
+			var isInnerBlue = random(0, 100) < chance;
+			if (isInnerBlue) {
+				cell.innerStrokeColor = _blueColor;
+			} else {
+				cell.innerStrokeColor = _greenColor;
+			}
+		}
 	}
 
 	buildGridOnRandomPos(_cells, _bucketSize); // rebuild bucket
@@ -495,6 +520,7 @@ const createCell = function (
 		distFromCenter: pDist,
 		outerStrokeColor,
 		innerStrokeColor,
+		isElectrified: false,
 	};
 
 	return cellObj;
