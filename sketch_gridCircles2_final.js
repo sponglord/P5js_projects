@@ -174,7 +174,7 @@ function draw() {
 		}
 
 		if (_phase === 2) {
-			if (checkForCellMotion(_cells[0])) {
+			if (checkForCellMotion(_cells[0], 2)) {
 				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3); // send to radial grid
 				return;
@@ -466,7 +466,8 @@ const createCell = function (
 
 	// Now we know the number of squares in each grid outline, we can calculate their radial distances if we want to arrange them in a circle
 	let theta = (pSqCount * TWO_PI) / numSquares; // radial angle of the square
-	theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
+	// theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
+	theta -= gridSize * (HALF_PI / 2);
 
 	const radialTargetX = round(_centerX + circleRadius * cos(theta));
 	const radialTargetY = round(_centerY + circleRadius * sin(theta));
@@ -650,8 +651,8 @@ function resetCellInCollisionProp() {
 }
 
 // monitor if "test" cell has moved a sufficient distance (a (half) square on the x & y from where it was)
-function checkForCellMotion(pCell) {
-	let moveDist = _sqSize / 2;
+function checkForCellMotion(pCell, pDivider = 1) {
+	let moveDist = _sqSize / pDivider; // / 2;
 	let { x, y, targetX, targetY } = pCell;
 
 	const xMin = targetX - moveDist;
