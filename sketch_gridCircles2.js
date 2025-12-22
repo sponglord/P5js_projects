@@ -377,21 +377,12 @@ function mouseReleased() {
 		// reset colour
 		if (cell.isElectrified) {
 			cell.isElectrified = false;
-			const chance = (cell.distFromCenter / _maxDistFromCenter) * 100;
 
-			var isOuterBlue = random(0, 100) < chance;
-			if (isOuterBlue) {
-				cell.outerStrokeColor = _blueColor;
-			} else {
-				cell.outerStrokeColor = _greenColor;
-			}
+			const { outerStrokeColor, innerStrokeColor } =
+				getChancedBaseStrokeColors(cell.distFromCenter);
 
-			var isInnerBlue = random(0, 100) < chance;
-			if (isInnerBlue) {
-				cell.innerStrokeColor = _blueColor;
-			} else {
-				cell.innerStrokeColor = _greenColor;
-			}
+			cell.outerStrokeColor = outerStrokeColor;
+			cell.innerStrokeColor = innerStrokeColor;
 		}
 	}
 
@@ -451,24 +442,8 @@ const createCell = function (
 
 	// Now we know the maximum distance a square can be from the centre
 	// - generate a stroke colour based on that distance
-	let outerStrokeColor;
-	let innerStrokeColor;
-
-	const chance = (pDist / _maxDistFromCenter) * 100;
-
-	var isOuterBlue = random(0, 100) < chance;
-	if (isOuterBlue) {
-		outerStrokeColor = _blueColor;
-	} else {
-		outerStrokeColor = _greenColor;
-	}
-
-	var isInnerBlue = random(0, 100) < chance;
-	if (isInnerBlue) {
-		innerStrokeColor = _blueColor;
-	} else {
-		innerStrokeColor = _greenColor;
-	}
+	const { outerStrokeColor, innerStrokeColor } =
+		getChancedBaseStrokeColors(pDist);
 	// --
 
 	let circleRadius = gridSize * _sqSize * 0.55;
@@ -525,6 +500,30 @@ const createCell = function (
 
 	return cellObj;
 };
+
+// Generate a stroke colour based on distance from center
+function getChancedBaseStrokeColors(pDistFromCenter) {
+	let outerStrokeColor;
+	let innerStrokeColor;
+
+	const chance = (pDistFromCenter / _maxDistFromCenter) * 100;
+
+	var isOuterBlue = random(0, 100) < chance;
+	if (isOuterBlue) {
+		outerStrokeColor = _blueColor;
+	} else {
+		outerStrokeColor = _greenColor;
+	}
+
+	var isInnerBlue = random(0, 100) < chance;
+	if (isInnerBlue) {
+		innerStrokeColor = _blueColor;
+	} else {
+		innerStrokeColor = _greenColor;
+	}
+
+	return { outerStrokeColor, innerStrokeColor };
+}
 
 // function findObjectByXY(arr, target) {
 // 	const { x, y } = target;
