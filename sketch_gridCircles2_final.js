@@ -29,6 +29,8 @@ const _gridStartPositions = [];
 const _gridSquaresCount = []; // currently don't need this
 const _cells = [];
 const _cellsByGridSize = []; // currently don't need this
+let _numCells = 0;
+let _numCellsInPlace = 0;
 
 let _checkForCollision = false;
 
@@ -112,6 +114,8 @@ function setup() {
 		_gridSquaresCount.push(numSquaresCreated);
 	}
 
+	_numCells = _cells.length;
+
 	// console.log('### :: _gridSizes=', _gridSizes);
 	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
@@ -131,10 +135,19 @@ function draw() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 
+		const drawWhite = false;
+		// i === 0 ||
+		// i === 8 ||
+		// i === 24 ||
+		// i === 48 ||
+		// i === 80 ||
+		// i === 120 ||
+		// i === 168;
+
 		if (_phase >= 2) {
-			drawRotatedCell(cell);
+			drawRotatedCell(cell, drawWhite);
 		} else {
-			drawCell(cell);
+			drawCell(cell, drawWhite);
 		}
 	}
 
@@ -144,8 +157,13 @@ function draw() {
 		return;
 	}
 
-	// Draw white square as mouse moves over grid
-	if (!_checkForCollision && _phase >= 1) {
+	// Draw white square as mouse moves over grid, if...
+	// ...we're not in collision mode, and we've drawn some kind of grid, and some/all the cells have stopped moving
+	if (
+		!_checkForCollision &&
+		_phase >= 1 &&
+		_numCellsInPlace >= _numCells / 2
+	) {
 		// Using getRadialCell also works for regular grid because all cells are generated with
 		// rotation related properties - we just don't apply that rotation when we draw the regular grid.
 		// However the hit test algorithm always looks at the rotation properties and ignores, or rather inverses,
@@ -163,12 +181,10 @@ function draw() {
 	// Triggers for next phase... detect if cells are sufficiently in motion by picking first cell
 	// and seeing how far it has moved out of position
 	if (_checkForCollision) {
-		// If in phase1 (regular grid)
-		if (_phase === 1) {
-			// check if first cell has moved enough
+		if (_phase >= 3) {
 			if (checkForCellMotion(_cells[0])) {
-				// console.log('### HAS MOVED ENOUGH!!!!!');
-				setPhase(2);
+				// console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
+				setPhase(4);
 				return;
 			}
 		}
@@ -181,10 +197,12 @@ function draw() {
 			}
 		}
 
-		if (_phase >= 3) {
+		// If in phase1 (regular grid)
+		if (_phase === 1) {
+			// check if first cell has moved enough
 			if (checkForCellMotion(_cells[0])) {
-				// console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
-				setPhase(4);
+				// console.log('### HAS MOVED ENOUGH!!!!!');
+				setPhase(2);
 				return;
 			}
 		}
@@ -240,6 +258,7 @@ function drawRotatedCell(pCell, pIsWhite) {
 
 const updatePositions = function () {
 	if (_checkForCollision) {
+		_numCellsInPlace = 0;
 		checkForCollision(_cells);
 	}
 
@@ -313,7 +332,7 @@ function move(pCell) {
 
 	const easing = 0.08;
 
-	// Skip target movement if in collision
+	// If no longer in collision, can we snap to target
 	if (!inCollision) {
 		const dx = targetX - x;
 		const dy = targetY - y;
@@ -325,6 +344,12 @@ function move(pCell) {
 			// and snap to target
 			pCell.x = targetX;
 			pCell.y = targetY;
+
+			// Count how many cells are in place
+			if (_numCellsInPlace < _numCells) {
+				_numCellsInPlace++;
+				// console.log('### _numCellsInPlace:: =', _numCellsInPlace);
+			}
 			return;
 		}
 
@@ -372,7 +397,7 @@ function mousePressed() {
 	// console.log('### coords:: =', coords);
 
 	// If we're clicking within either type of grid
-	if (coords) {
+	if (coords && _numCellsInPlace >= _numCells / 2) {
 		_checkForCollision = true;
 	}
 }
@@ -467,7 +492,8 @@ const createCell = function (
 	// Now we know the number of squares in each grid outline, we can calculate their radial distances if we want to arrange them in a circle
 	let theta = (pSqCount * TWO_PI) / numSquares; // radial angle of the square
 	// theta -= HALF_PI; // to start drawing from the 12 o'clock position instead of the 3 o'clock
-	theta -= gridSize * (HALF_PI / 2);
+	// theta -= gridSize * (HALF_PI / 2);
+	theta -= HALF_PI + HALF_PI / 2; // start drawing the circle from a "top right" position, equivalent to where the square grids are drawn from
 
 	const radialTargetX = round(_centerX + circleRadius * cos(theta));
 	const radialTargetY = round(_centerY + circleRadius * sin(theta));
@@ -640,6 +666,7 @@ function setPhase(val) {
 
 	if (_phase === 4) {
 		_checkForCollision = false;
+		_numCellsInPlace = 0;
 	}
 }
 
