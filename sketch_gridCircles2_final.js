@@ -174,7 +174,7 @@ function draw() {
 		}
 
 		if (_phase === 2) {
-			if (checkForCellMotion(_cells[0], 2)) {
+			if (checkForCellMotion(_cells[0])) {
 				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3); // send to radial grid
 				return;
@@ -647,6 +647,9 @@ function resetCellInCollisionProp() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		cell.inCollision = false;
+
+		cell.vx = 0;
+		cell.vy = 0;
 	}
 }
 
