@@ -22,9 +22,15 @@ body {
 }
 
 .second-level-desc {
+	color: #ccc;
 	font-size: 12px;
-	/* cursor: pointer; */
-	pointer-events: none;
+}
+
+.centralised-anchor {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 a {
