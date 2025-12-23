@@ -21,6 +21,11 @@ body {
 	text-align: center;
 }
 
+.second-level-desc {
+	font-size: 12px;
+	cursor: pointer;
+}
+
 a {
 	color: aquamarine;
 	text-decoration: none;
