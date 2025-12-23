@@ -23,10 +23,12 @@ body {
 
 .second-level-desc {
 	font-size: 12px;
-	cursor: pointer;
+	/* cursor: pointer; */
+	pointer-events: none;
 }
 
 a {
+	font-size: 15px;
 	color: aquamarine;
 	text-decoration: none;
 }
