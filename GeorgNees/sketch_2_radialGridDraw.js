@@ -99,10 +99,10 @@ function setup() {
 		_gridSquaresCount.push(numSquaresCreated);
 	}
 
-	console.log('### :: _gridSizes=', _gridSizes);
-	console.log('### :: _cellsByGridSize=', _cellsByGridSize);
-	console.log('### :: gridStartPositions=', _gridStartPositions);
-	console.log('### :: _gridSquaresCount=', _gridSquaresCount);
+	// console.log('### :: _gridSizes=', _gridSizes);
+	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
+	// console.log('### :: gridStartPositions=', _gridStartPositions);
+	// console.log('### :: _gridSquaresCount=', _gridSquaresCount);
 
 	// Draws black outlines over the top
 	setTimeout(() => {
@@ -125,9 +125,8 @@ function setup() {
 }
 
 function mousePressed() {
-	console.log('### mouseX:: =', mouseX);
-	console.log('### mouseY:: =', mouseY);
-
+	// console.log('### mouseX:: =', mouseX);
+	// console.log('### mouseY:: =', mouseY);
 	// 	// Get the size of the outer grid e.g. 15x15
 	// 	const gridSize = _gridSizes[_gridSizes.length - 1];
 	// 	const coords = getGridCell(
@@ -139,7 +138,6 @@ function mousePressed() {
 	// 		_gridStartPositions
 	// 	);
 	// 	console.log('### coords:: =', coords);
-
 	// 	// if we're clicking within grid
 	// 	if (coords) {
 	// 		_checkForCollision = true;
