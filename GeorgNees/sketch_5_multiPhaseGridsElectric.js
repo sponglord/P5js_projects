@@ -182,7 +182,7 @@ function draw() {
 
 		// Rotated cells - ready to go to radial grid
 		if (_phase === 2) {
-			if (checkForCellMotion(_cells[0])) {
+			if (checkForCellMotion(_cells[0], 2)) {
 				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
 				setPhase(3); // send to radial grid
 				return;
