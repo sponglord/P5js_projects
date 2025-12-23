@@ -161,8 +161,8 @@ function draw() {
 	// ...we're not in collision mode, and we've drawn some kind of grid, and some/all the cells have stopped moving
 	if (
 		!_checkForCollision &&
-		_phase >= 1 &&
-		_numCellsInPlace >= _numCells / 2
+		_phase >= 1 //&&
+		//_numCellsInPlace >= _numCells / 2
 	) {
 		// Using getRadialCell also works for regular grid because all cells are generated with
 		// rotation related properties - we just don't apply that rotation when we draw the regular grid.
@@ -397,7 +397,8 @@ function mousePressed() {
 	// console.log('### coords:: =', coords);
 
 	// If we're clicking within either type of grid
-	if (coords && _numCellsInPlace >= _numCells / 2) {
+	if (coords) {
+		//&& _numCellsInPlace >= _numCells / 2) {
 		_checkForCollision = true;
 	}
 }
@@ -675,6 +676,9 @@ function resetCellInCollisionProp() {
 		const cell = _cells[i];
 		cell.inCollision = false;
 
+		// Not totally sure if this does anything to prevent a sudden transition to the next phase
+		// (Felt like sometimes a remnant of velocity kicked in to make the target cell appear to move a lot
+		// which then prematurely caused the jump to the next phase)
 		cell.vx = 0;
 		cell.vy = 0;
 	}
