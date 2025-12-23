@@ -8,7 +8,6 @@ const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
 const _whiteColor = 'rgba(255, 255, 255, 0.7)';
-const _whiteColor2 = 'rgba(255, 255, 255, 0.8)';
 
 const _inAGeorgNeesStylee = true;
 
@@ -32,6 +31,7 @@ const _cells = [];
 const _cellsByGridSize = []; // currently don't need this
 let _numCells = 0;
 let _numCellsInPlace = 0;
+
 let _checkForCollision = false;
 
 let _isRadialGrid = false;
@@ -113,7 +113,9 @@ function setup() {
 		);
 		_gridSquaresCount.push(numSquaresCreated);
 	}
+
 	_numCells = _cells.length;
+
 	// console.log('### :: _gridSizes=', _gridSizes);
 	// console.log('### :: _cellsByGridSize=', _cellsByGridSize);
 	// console.log('### :: gridStartPositions=', _gridStartPositions);
@@ -133,10 +135,19 @@ function draw() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 
+		const drawWhite = false;
+		// i === 0 ||
+		// i === 8 ||
+		// i === 24 ||
+		// i === 48 ||
+		// i === 80 ||
+		// i === 120 ||
+		// i === 168;
+
 		if (_phase >= 2) {
-			drawRotatedCell(cell);
+			drawRotatedCell(cell, drawWhite);
 		} else {
-			drawCell(cell); // drawCell(cell, i === 0) // to draw first cell in white
+			drawCell(cell, drawWhite);
 		}
 	}
 
@@ -170,6 +181,7 @@ function draw() {
 	// Triggers for next phase... detect if cells are sufficiently in motion by picking first cell
 	// and seeing how far it has moved out of position
 	if (_checkForCollision) {
+		// Radial grid - set cells adrift
 		if (_phase >= 3) {
 			if (checkForCellMotion(_cells[0])) {
 				// console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
@@ -178,6 +190,7 @@ function draw() {
 			}
 		}
 
+		// Rotated cells - ready to go to radial grid
 		if (_phase === 2) {
 			if (checkForCellMotion(_cells[0])) {
 				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
@@ -186,7 +199,7 @@ function draw() {
 			}
 		}
 
-		// If in phase1 (regular grid)
+		// If in phase1 (regular grid) - ready to rotate cells
 		if (_phase === 1) {
 			// check if first cell has moved enough
 			if (checkForCellMotion(_cells[0])) {
@@ -201,21 +214,10 @@ function draw() {
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawCell(pCell, pIsWhite) {
 	// One batch extraction of props
-	const { x, y, outerStrokeColor, innerStrokeColor, isElectrified } = pCell;
+	const { x, y, outerStrokeColor, innerStrokeColor } = pCell;
 
-	strokeWeight(2);
-	let whiteColor = _whiteColor;
-
-	let drawWhite = pIsWhite;
-
-	if (isElectrified) {
-		drawWhite = true;
-		strokeWeight(1);
-		whiteColor = _whiteColor2;
-	}
-
-	if (drawWhite) {
-		stroke(whiteColor);
+	if (pIsWhite) {
+		stroke(_whiteColor);
 		square(x, y, _sqSize);
 	} else if (_inAGeorgNeesStylee) {
 		stroke(outerStrokeColor);
@@ -231,19 +233,7 @@ function drawCell(pCell, pIsWhite) {
 
 // Already uses p5 globals like stroke & square, so can use other globals
 function drawRotatedCell(pCell, pIsWhite) {
-	const { x, y, outerStrokeColor, innerStrokeColor, theta, isElectrified } =
-		pCell;
-
-	strokeWeight(2);
-	let whiteColor = _whiteColor;
-
-	let drawWhite = pIsWhite;
-
-	if (isElectrified) {
-		drawWhite = true;
-		strokeWeight(1);
-		whiteColor = _whiteColor2;
-	}
+	const { x, y, outerStrokeColor, innerStrokeColor, theta } = pCell;
 
 	push(); // save the current transform
 
@@ -251,8 +241,8 @@ function drawRotatedCell(pCell, pIsWhite) {
 
 	rotate(theta); // rotate around that point
 
-	if (drawWhite) {
-		stroke(whiteColor);
+	if (pIsWhite) {
+		stroke(_whiteColor);
 		square(0, 0, _sqSize);
 	} else if (_inAGeorgNeesStylee) {
 		stroke(outerStrokeColor);
@@ -272,7 +262,6 @@ const updatePositions = function () {
 	if (_checkForCollision) {
 		_numCellsInPlace = 0;
 		checkForCollision(_cells);
-		checkForElectrification();
 	}
 
 	for (let i = 0; i < _cells.length; i++) {
@@ -297,7 +286,6 @@ function checkForCollision(cells) {
 
 	for (const c0 of cells) {
 		c0.inCollision = false;
-		// c0.isElectrified = false;
 
 		const gx = Math.floor(c0.x / _bucketSize);
 		const gy = Math.floor(c0.y / _bucketSize);
@@ -333,13 +321,6 @@ function checkForCollision(cells) {
 						c1.vy += ay * _speed;
 
 						c0.inCollision = c1.inCollision = true;
-
-						// if (checkForCellMotion(c0, 2)) {
-						// 	c0.isElectrified = true;
-						// }
-						// if (checkForCellMotion(c1, 2)) {
-						// 	c1.isElectrified = true;
-						// }
 					}
 				}
 			}
@@ -365,6 +346,7 @@ function move(pCell) {
 			// and snap to target
 			pCell.x = targetX;
 			pCell.y = targetY;
+
 			// Count how many cells are in place
 			if (_numCellsInPlace < _numCells) {
 				_numCellsInPlace++;
@@ -426,7 +408,6 @@ function mousePressed() {
 function mouseReleased() {
 	_checkForCollision = false;
 	resetCellInCollisionProp();
-	resetCellIsElectrifiedProp();
 }
 
 // TODO - this function only makes sense within this sketch - so can use globals
@@ -553,7 +534,6 @@ const createCell = function (
 		distFromCenter: pDist,
 		outerStrokeColor,
 		innerStrokeColor,
-		isElectrified: false,
 	};
 
 	return cellObj;
@@ -565,7 +545,10 @@ function getRadialCell(pMouseX, pMouseY, pCells, pSqSize) {
 
 		const { x, y, cosR, sinR } = cell;
 
-		if (hitRotatedSquare(pMouseX, pMouseY, x, y, pSqSize, cosR, sinR)) {
+		if (
+			// hitRotatedSquare(mx, my, c.x, c.y, pSqSize, c.theta, c.cosR, c.sinR)
+			hitRotatedSquare(pMouseX, pMouseY, x, y, pSqSize, cosR, sinR)
+		) {
 			return { x, y, cell };
 		}
 	}
@@ -686,29 +669,7 @@ function setPhase(val) {
 
 	if (_phase === 4) {
 		_checkForCollision = false;
-		resetCellIsElectrifiedProp();
-	}
-}
-
-function checkForElectrification() {
-	// in phase one reduce the amount a cell needs to move in order to be electrified
-	// for other phases increase it
-	const divider = _phase === 1 ? 2 : 0.8;
-
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
-		if (cell.inCollision) {
-			cell.isElectrified = checkForCellMotion(cell, divider);
-		} else {
-			cell.isElectrified = false;
-		}
-	}
-}
-
-function resetCellIsElectrifiedProp() {
-	for (let i = 0; i < _cells.length; i++) {
-		const cell = _cells[i];
-		cell.isElectrified = false;
+		_numCellsInPlace = 0;
 	}
 }
 
@@ -716,7 +677,6 @@ function resetCellInCollisionProp() {
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		cell.inCollision = false;
-		cell.isElectrified = false;
 
 		// Not totally sure if this does anything to prevent a sudden transition to the next phase
 		// (Felt like sometimes a remnant of velocity kicked in to make the target cell appear to move a lot
