@@ -717,6 +717,12 @@ function resetCellInCollisionProp() {
 		const cell = _cells[i];
 		cell.inCollision = false;
 		cell.isElectrified = false;
+
+		// Not totally sure if this does anything to prevent a sudden transition to the next phase
+		// (Felt like sometimes a remnant of velocity kicked in to make the target cell appear to move a lot
+		// which then prematurely caused the jump to the next phase)
+		cell.vx = 0;
+		cell.vy = 0;
 	}
 }
 
