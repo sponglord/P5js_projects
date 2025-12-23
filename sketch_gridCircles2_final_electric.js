@@ -8,7 +8,7 @@ const _backgroundColor = 'rgb(0, 103, 189)';
 const _blueColor = 'rgb(0, 74, 183)';
 const _greenColor = 'rgb(12, 167, 17)';
 const _whiteColor = 'rgba(255, 255, 255, 0.7)';
-const _whiteColor2 = 'rgba(255, 255, 255, 0.9)';
+const _whiteColor2 = 'rgba(255, 255, 255, 0.8)';
 
 const _inAGeorgNeesStylee = true;
 
@@ -205,7 +205,7 @@ function drawCell(pCell, pIsWhite) {
 	if (isElectrified) {
 		drawWhite = true;
 		strokeWeight(1);
-		// whiteColor = _whiteColor2;
+		whiteColor = _whiteColor2;
 	}
 
 	if (drawWhite) {
@@ -236,7 +236,7 @@ function drawRotatedCell(pCell, pIsWhite) {
 	if (isElectrified) {
 		drawWhite = true;
 		strokeWeight(1);
-		// whiteColor = _whiteColor2;
+		whiteColor = _whiteColor2;
 	}
 
 	push(); // save the current transform
