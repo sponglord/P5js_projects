@@ -1,8 +1,8 @@
 html,
 body {
-	margin: 0;
+	margin: 25px 0 0;
 	padding: 0;
-	background-color: #002e8b;
+	background-color: #002e8bf0;
 	display: flex;
 	justify-content: center;
 }
