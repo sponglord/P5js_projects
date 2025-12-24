@@ -24,7 +24,7 @@ const _centerY = _canvasH / 2;
 
 let _maxDistFromCenter = null;
 
-const _maxGridSize = 15; // 15
+const _maxGridSize = 17; // 15
 
 const _gridSizes = [];
 const _gridStartPositions = [];
@@ -173,8 +173,10 @@ function draw() {
 	if (_checkForCollision) {
 		// Radial grid - set cells adrift
 		if (_phase >= 3) {
-			if (checkForCellMotion(_cells[0])) {
-				// console.log('### HAS MOVED ENOUGH AGAIN AGAIN!!!!!');
+			// If a quarter of the cells have moved twice a square size from target
+			const ncim = getNumCellsInMotion(2);
+			// console.log('### getNumCellsInMotion:: =', ncim);
+			if (ncim > _numCells / 4) {
 				setPhase(4);
 				return;
 			}
@@ -182,8 +184,10 @@ function draw() {
 
 		// Rotated cells - ready to go to radial grid
 		if (_phase === 2) {
-			if (checkForCellMotion(_cells[0], 2)) {
-				// console.log('### HAS MOVED ENOUGH AGAIN!!!!!');
+			// If a fifth of the cells have moved twice a square size from target
+			const ncim = getNumCellsInMotion(2);
+			// console.log('### getNumCellsInMotion:: =', ncim);
+			if (ncim > _numCells / 5) {
 				setPhase(3); // send to radial grid
 				return;
 			}
@@ -191,9 +195,10 @@ function draw() {
 
 		// If in phase1 (regular grid) - ready to rotate cells
 		if (_phase === 1) {
-			// check if first cell has moved enough
-			if (checkForCellMotion(_cells[0])) {
-				// console.log('### HAS MOVED ENOUGH!!!!!');
+			// If a quarter of the cells have moved a square size from target
+			const ncim = getNumCellsInMotion();
+			// console.log('### getNumCellsInMotion:: =', ncim);
+			if (ncim > _numCells / 4) {
 				setPhase(2);
 				return;
 			}
@@ -675,16 +680,16 @@ function setPhase(val) {
 
 		// Using a timeout lets cells drift away before snapping to radial grid
 		// This eases the transition from the regular to radial grid (otherwise there's a bit of a weird "crossover")
-		setTimeout(() => {
-			resetCellInCollisionProp();
+		// setTimeout(() => {
+		resetCellInCollisionProp();
 
-			// Change cell's target positions to the radial ones
-			for (let i = 0; i < _cells.length; i++) {
-				const cell = _cells[i];
-				cell.targetX = cell.radialTargetX;
-				cell.targetY = cell.radialTargetY;
-			}
-		}, 300);
+		// Change cell's target positions to the radial ones
+		for (let i = 0; i < _cells.length; i++) {
+			const cell = _cells[i];
+			cell.targetX = cell.radialTargetX;
+			cell.targetY = cell.radialTargetY;
+		}
+		// }, 300);
 	}
 
 	if (_phase === 4) {
@@ -696,12 +701,12 @@ function setPhase(val) {
 function checkForElectrification() {
 	// in phase one reduce the amount a cell needs to move in order to be electrified
 	// for other phases increase it
-	const divider = _phase === 1 ? 2 : 0.8;
+	const proportion = _phase === 1 ? 0.5 : 1;
 
 	for (let i = 0; i < _cells.length; i++) {
 		const cell = _cells[i];
 		if (cell.inCollision) {
-			cell.isElectrified = checkForCellMotion(cell, divider);
+			cell.isElectrified = checkForCellMotion(cell, proportion);
 		} else {
 			cell.isElectrified = false;
 		}
@@ -729,9 +734,23 @@ function resetCellInCollisionProp() {
 	}
 }
 
-// monitor if "test" cell has moved a sufficient distance (a (half) square on the x & y from where it was)
-function checkForCellMotion(pCell, pDivider = 1) {
-	let moveDist = _sqSize / pDivider; // / 2;
+function getNumCellsInMotion(pCellProportion = 1) {
+	let count = 0;
+	for (let i = 0; i < _cells.length; i++) {
+		const cell = _cells[i];
+		if (checkForCellMotion(cell, pCellProportion)) {
+			count++;
+		}
+	}
+	return count;
+}
+
+/**
+ * Check if a cell has moved a given proportion of its size on the x & y axes
+ * away from its target (resting) position
+ */
+function checkForCellMotion(pCell, pCellProportion = 1) {
+	let moveDist = _sqSize * pCellProportion;
 	let { x, y, targetX, targetY } = pCell;
 
 	const xMin = targetX - moveDist;

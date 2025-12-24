@@ -185,7 +185,7 @@ function draw() {
 		if (_phase >= 3) {
 			// If a quarter of the cells have moved twice a square size from target
 			const ncim = getNumCellsInMotion(2);
-			console.log('### getNumCellsInMotion:: =', ncim);
+			// console.log('### getNumCellsInMotion:: =', ncim);
 			if (ncim > _numCells / 4) {
 				setPhase(4);
 				return;
@@ -196,7 +196,7 @@ function draw() {
 		if (_phase === 2) {
 			// If a fifth of the cells have moved twice a square size from target
 			const ncim = getNumCellsInMotion(2);
-			console.log('### getNumCellsInMotion:: =', ncim);
+			// console.log('### getNumCellsInMotion:: =', ncim);
 			if (ncim > _numCells / 5) {
 				setPhase(3); // send to radial grid
 				return;
@@ -207,7 +207,7 @@ function draw() {
 		if (_phase === 1) {
 			// If a quarter of the cells have moved a square size from target
 			const ncim = getNumCellsInMotion();
-			console.log('### getNumCellsInMotion:: =', ncim);
+			// console.log('### getNumCellsInMotion:: =', ncim);
 			if (ncim > _numCells / 4) {
 				setPhase(2);
 				return;
@@ -660,16 +660,16 @@ function setPhase(val) {
 
 		// Using a timeout lets cells drift away before snapping to radial grid
 		// This eases the transition from the regular to radial grid (otherwise there's a bit of a weird "crossover")
-		setTimeout(() => {
-			resetCellInCollisionProp();
+		// setTimeout(() => {
+		resetCellInCollisionProp();
 
-			// Change cell's target positions to the radial ones
-			for (let i = 0; i < _cells.length; i++) {
-				const cell = _cells[i];
-				cell.targetX = cell.radialTargetX;
-				cell.targetY = cell.radialTargetY;
-			}
-		}, 300);
+		// Change cell's target positions to the radial ones
+		for (let i = 0; i < _cells.length; i++) {
+			const cell = _cells[i];
+			cell.targetX = cell.radialTargetX;
+			cell.targetY = cell.radialTargetY;
+		}
+		// }, 300);
 	}
 
 	if (_phase === 4) {
